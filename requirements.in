@@ -1,0 +1,16 @@
+dynaconf
+apispec
+apispec_webframeworks
+dataclasses_jsonschema
+sqlalchemy
+flask_swagger_ui
+Flask
+#for allow origin *, to remove for prod
+flask-cors
+flask_restful
+psycopg2
+Flask-SQLAlchemy
+decorators
+gunicorn
+Web3
+grpcio

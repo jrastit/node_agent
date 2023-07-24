@@ -1,0 +1,8 @@
+flake8
+pylint
+pylint-exit
+anybadge
+pytest
+pytest-cov
+pytest-flask
+pytest-mock

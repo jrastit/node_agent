@@ -1,0 +1,6 @@
+.coverage
+.idea
+__pycache__
+private_env.sh
+create_database.sh
+/settings/.secrets.yaml

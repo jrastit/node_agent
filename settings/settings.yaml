@@ -1,0 +1,21 @@
+global:
+
+test:
+  db_dsn: 'postgresql+psycopg2://node_agent:Hf8KVjZN5c7L9KgY@localhost/node_agent_test'
+  node_agent_api_token: 'test'
+  test_server: '34.155.3.8' #Google_testnet
+  test_user: 'oasis'
+  test_network: 'testnet'
+  test_entity: 'clu'
+  test_node_type: 'validator'
+  test_admin_user: 'jrastit'
+  test_node_root_dir: '/oasis'
+  test_node_address: '34.155.3.8'
+  test_node_port: '26656'
+  test_paratime_worker_client_port: '30001'
+  test_paratime_worker_p2p_port: '30002'
+  test_ssh_id: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4Re+Ag/bb6YbzuyQ0QL9PTfqAo3oXT6kkeEkJO5y8ke1PgPV/29RndeJQgWm03XZLk3lAHkUQCHbS/cJtA3vFzQsdBlByW6W1hW9eTtSNNvuXLLMpR1HoB6v990pe+UTdX2+xMwjz539/P42CDMzcbmtp+2gWXy6PaEMB5KtbHy2lTSZ+eI1KXkSe1TRq/Iw20bkd1eJMzg7Ftj3F3HXVvz3luH49aOiC9ChYvNnhahcErzqRxALCqXhb/1EZJglJmvrY3oSISNbGuS+QMVQtdEJHKX2kdJ0V7+tuQDSoyvdxa74wN4RS9T81OVEqYr/7m2oEoCkSd4V42VCludOv oasis@asus'
+
+  test_core_version: '22.2.9'
+  test_genesis_url: 'ttps://github.com/oasisprotocol/testnet-artifacts/releases/download/2022-03-03/genesis.json'
+  test_seed_node: '53572F689E5BACDD3C6527E6594EC49C8F3093F6@34.86.165.6:26656'

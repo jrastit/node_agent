@@ -1,0 +1,7 @@
+return pong
+---
+tags:
+  - TEST
+responses:
+  200:
+      description: 'Pong'
