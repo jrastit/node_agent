@@ -1,4 +1,7 @@
 global:
+  oasis_config_md_url:
+    - 'https://raw.githubusercontent.com/oasisprotocol/docs/main/docs/node/mainnet/README.md'
+    - 'https://raw.githubusercontent.com/oasisprotocol/docs/main/docs/node/testnet/README.md'
 
 test:
   db_dsn: 'postgresql+psycopg2://node_agent:Hf8KVjZN5c7L9KgY@localhost/node_agent_test'
@@ -21,3 +24,4 @@ test:
   test_core_version: '22.2.9'
   test_genesis_url: 'https://github.com/oasisprotocol/testnet-artifacts/releases/download/2022-03-03/genesis.json'
   test_seed_node: '53572F689E5BACDD3C6527E6594EC49C8F3093F6@34.86.165.6:26656'
+

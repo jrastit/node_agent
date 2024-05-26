@@ -11,7 +11,7 @@ from node_agent.model.oasis.network import OasisNetwork
 from node_agent.model.oasis.entity import OasisEntity
 
 
-from node_agent.service.oasis_config import export_oasis_config
+from node_agent.service.oasis.oasis_config import export_oasis_config
 import datetime
 from node_agent.utils.db_util import (
     inset_or_update_object_from_json,

@@ -1,4 +1,3 @@
-from node_agent.service.oasis_config import export_oasis_config
 from tests.utils.api_util import (
     api_put_data,
 )
