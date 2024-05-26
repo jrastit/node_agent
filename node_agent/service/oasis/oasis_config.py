@@ -33,6 +33,83 @@ def export_oasis_config(json_file):
     return jsonify(oasis_node_list)
 
 
+def _get_version_url_list(section, i, version_list, url_list, str1, str2=None):
+    if str1 in section["lines"][i] and (
+        str2 == None or str2 in section["lines"][i]
+    ):
+        if len(version_list) > 0 or len(url_list) > 0:
+            raise Exception(
+                f"More than one version found for "
+                + section["name"]
+                + " =>"
+                + str1
+                + "/"
+                + str2
+            )
+        for j in range(i + 1, len(section["lines"])):
+            line = section["lines"][j]
+            if len(line) == 0 or line[0] != " ":
+                break
+            start_index = line.find("[") + 1
+            end_index = line.find("]", start_index)
+            if start_index <= 0 or end_index < 0:
+                break
+            version_list.append(line[start_index:end_index])
+            start_index = line.find("(") + 1
+            end_index = line.find(")", start_index)
+            if start_index <= 0 or end_index < 0:
+                raise Exception("Version url not found")
+            url_list.append(line[start_index:end_index])
+    return version_list, url_list
+
+
+def _get_oasis_core_version(section, i, version, url):
+    version_list = []
+    url_list = []
+    if version is not None:
+        version_list.append(version)
+    if url is not None:
+        url_list.append(url)
+    version_list, url_list = _get_version_url_list(
+        section,
+        i,
+        version_list,
+        url_list,
+        "Oasis Core",
+        "version:",
+    )
+    if len(version_list) > 1 or len(url_list) > 1:
+        raise Exception(
+            "Oasis Core multi version not found in section " + section["name"]
+        )
+    elif len(version_list) == 1 and len(url_list) == 1:
+        return version_list[0], url_list[0]
+    return version, url
+
+
+def _get_value_list(section, i, value_list, str1, str2=None):
+    if (str1 in section["lines"][i]) and (
+        str2 == None or (str2 in section["lines"][i])
+    ):
+        if len(value_list) > 0:
+            raise Exception(
+                f"More than one value found for "
+                + section["name"]
+                + " =>"
+                + str1
+                + "/"
+                + str2
+            )
+        for j in range(i + 1, len(section["lines"])):
+            line = section["lines"][j]
+            start_index = line.find("`") + 1
+            end_index = line.find("`", start_index)
+            if start_index <= 0 or end_index < 0:
+                break
+            value_list.append(line[start_index:end_index])
+    return value_list
+
+
 def get_confile_from_md_file(md_file):
     with open(md_file, "r") as file:
         data = file.read()
@@ -75,6 +152,7 @@ def get_confile_from_md(data: str):
     for section in section_list:
         if section["name"] == "Network Parameters":
             for i in range(len(section["lines"])):
+                # get genesis file
                 if "[Genesis file]" in section["lines"][i]:
                     if network_genesis_file is not None:
                         raise Exception("More than one genesis file found")
@@ -86,46 +164,94 @@ def get_confile_from_md(data: str):
                     if end_index < 0:
                         raise Exception("Genesis end file not found")
                     network_genesis_file = line[start_index:end_index]
-                if "Oasis seed node addresses:" in section["lines"][i]:
-                    if len(network_seed_node) > 0:
-                        raise Exception(
-                            "More than one seed node section found"
+                # get seed node
+                network_seed_node = _get_value_list(
+                    section,
+                    i,
+                    network_seed_node,
+                    "Oasis seed node addresses:",
+                )
+                # get core version
+                network_core_version, network_core_version_url = (
+                    _get_oasis_core_version(
+                        section,
+                        i,
+                        network_core_version,
+                        network_core_version_url,
+                    )
+                )
+
+        elif section["name"] == "ParaTimes":
+
+            paratime_section_list = []
+            paratime_list = []
+            for i in range(len(section["lines"])):
+                if section["lines"][i].startswith("### "):
+                    paratime_section_list.append(
+                        {
+                            "name": section["lines"][i][4:],
+                            "lines": [],
+                        }
+                    )
+                else:
+                    if len(paratime_section_list) > 0:
+                        paratime_section_list[-1]["lines"].append(
+                            section["lines"][i]
                         )
-                    for j in range(i + 1, len(section["lines"])):
-                        line = section["lines"][j]
-                        start_index = line.find("`") + 1
-                        if start_index <= 0:
-                            break
-                        end_index = line.find("`", start_index)
-                        if end_index < 0:
-                            raise Exception(
-                                f"Seed node address not found in line {line} {start_index} {end_index}"
-                            )
-                        network_seed_node.append(line[start_index:end_index])
-                if (
-                    "[Oasis Core]" in section["lines"][i]
-                    and "version:" in section["lines"][i]
-                ):
-                    if (
-                        network_core_version is not None
-                        or network_core_version_url is not None
-                    ):
-                        raise Exception(
-                            "More than one Oasis Core version found"
+            for paratime_section in paratime_section_list:
+                runtime_identifier = []
+                paratime = {
+                    "name": paratime_section["name"],
+                    "core_version": None,
+                    "core_version_url": None,
+                    "runtime_identifier": None,
+                    "runtime_version": [],
+                    "runtime_version_url": [],
+                    "IAS_proxy": [],
+                }
+                paratime_list.append(paratime)
+                for i in range(len(paratime_section["lines"])):
+                    # get core version
+                    paratime["core_version"], paratime["core_version_url"] = (
+                        _get_oasis_core_version(
+                            paratime_section,
+                            i,
+                            paratime["core_version"],
+                            paratime["core_version_url"],
                         )
-                    line = section["lines"][i + 1]
-                    start_index = line.find("[") + 1
-                    end_index = line.find("]", start_index)
-                    if start_index <= 0 or end_index < 0:
-                        raise Exception("Oasis Core version not found")
-                    network_core_version = line[start_index:end_index]
-                    start_index = line.find("(") + 1
-                    end_index = line.find(")", start_index)
-                    if start_index <= 0 or end_index < 0:
-                        raise Exception("Oasis Core version url not found")
-                    network_core_version_url = line[start_index:end_index]
-        else:
-            print(f"Section '{section['name']}' not found")
+                    )
+                    # get runtime identifier
+                    runtime_identifier = _get_value_list(
+                        paratime_section,
+                        i,
+                        runtime_identifier,
+                        "Runtime identifier",
+                    )
+                    # get runtime version
+                    (
+                        paratime["runtime_version"],
+                        paratime["runtime_version_url"],
+                    ) = _get_version_url_list(
+                        paratime_section,
+                        i,
+                        paratime["runtime_version"],
+                        paratime["runtime_version_url"],
+                        "Runtime bundle version",
+                    )
+                    # get IAS proxy
+                    paratime["IAS_proxy"] = _get_value_list(
+                        paratime_section,
+                        i,
+                        paratime["IAS_proxy"],
+                        "IAS proxy",
+                    )
+                if len(runtime_identifier) > 1:
+                    raise Exception(
+                        "More than one runtime identifier found in section "
+                        + paratime_section["name"]
+                    )
+                elif len(runtime_identifier) == 1:
+                    paratime["runtime_identifier"] = runtime_identifier[0]
 
     return {
         "network": network,
@@ -133,4 +259,5 @@ def get_confile_from_md(data: str):
         "network_seed_node": network_seed_node,
         "network_core_version": network_core_version,
         "network_core_version_url": network_core_version_url,
+        "paratime_list": paratime_list,
     }
