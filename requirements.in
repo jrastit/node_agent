@@ -9,8 +9,10 @@ Flask
 flask-cors
 flask_restful
 psycopg2
+psycopg2-binary
 Flask-SQLAlchemy
 decorators
 gunicorn
-Web3
 grpcio
+ansible
+
