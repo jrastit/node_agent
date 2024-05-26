@@ -100,5 +100,11 @@ def api_entity_delete(entity_id):
 @oasis_api.route("/api/oasis/config/save", methods=["PUT"])
 @require_appkey
 def api_oasis_config_save():
-    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    return export_oasis_config(f"export/oasis_config_{current_datetime}.json")
+    if False:
+        current_datetime = datetime.datetime.now().strftime(
+            "%Y-%m-%d_%H-%M-%S"
+        )
+        return export_oasis_config(
+            f"export/oasis_config_{current_datetime}.json"
+        )
+    return export_oasis_config(f"export/oasis_config_test.json")

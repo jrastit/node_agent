@@ -1,5 +1,4 @@
 from node_agent.model.db import db
-from node_agent.model.oasis.node import OasisNode
 from sqlalchemy import text
 
 

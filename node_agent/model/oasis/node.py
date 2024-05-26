@@ -16,8 +16,6 @@ from node_agent.model.db import (
     column_time_updated,
 )
 
-from node_agent.model.oasis.nodetype import OasisNodetype
-
 node_nodetype = Table(
     "oasis_node_nodetype",
     Base.metadata,
@@ -67,6 +65,7 @@ class OasisNode(Base):
     )
 
     nodetype: Mapped[list["OasisNodetype"]] = column_relationship_many_to_many(
-        OasisNodetype,
+        "OasisNodetype",
         secondary=node_nodetype,
+        # back_populates="node",
     )

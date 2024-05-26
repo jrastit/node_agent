@@ -75,12 +75,15 @@ def column_foreign_key(key, primary_key=False):
     )
 
 
-def column_relationship_many_to_many(mapped, secondary, back_populates=None):
+def column_relationship_many_to_many(
+    mapped, secondary, back_populates=None, lazy="select"
+):
     return relationship(
         mapped,
         back_populates=back_populates,
         secondary=secondary,
         default_factory=list,
+        lazy=lazy,
     )
 
 

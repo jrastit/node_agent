@@ -2,6 +2,7 @@ from node_agent.service.oasis_config import export_oasis_config
 from tests.utils.api_util import (
     api_put_data,
 )
+from tests.utils.test_node import load_test_node
 
 
 def test_api_oasis_node_post_error(app):
@@ -137,4 +138,7 @@ def test_api_oasis_node(app):
     assert node["entity_id"] == entity_id
     assert len(node["nodetype"]) == 1
 
-    node_handler = api_put_data("/api/oasis/config/save", 200, {})
+
+def test_api_oasis_node_save(app):
+    load_test_node()
+    api_put_data("/api/oasis/config/save", 200, {})

@@ -2,6 +2,7 @@ from sqlalchemy.orm import Mapped
 
 from node_agent.model.db import (
     Base,
+    # column_relationship_many_to_many,
     intpk,
     column_name,
     column_string_null,
@@ -15,6 +16,8 @@ from node_agent.model.db import (
     column_time_updated,
 )
 from datetime import datetime
+
+# from node_agent.model.oasis.node import node_nodetype
 
 
 class OasisNodetype(Base):
@@ -37,3 +40,9 @@ class OasisNodetype(Base):
 
     network_id: Mapped[int] = column_foreign_key("oasis_network.id")
     network: Mapped["OasisNetwork"] = column_relationship()
+
+    # node: Mapped[list["OasisNode"]] = column_relationship_many_to_many(
+    #     "OasisNode",
+    #     secondary=node_nodetype,
+    #     back_populates="nodetype",
+    # )

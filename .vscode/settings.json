@@ -8,5 +8,10 @@
     "black-formatter.args": ["--line-length", "79"],
     "python.analysis.diagnosticMode": "workspace",
     "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
