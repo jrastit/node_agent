@@ -1,12 +1,29 @@
 from sqlalchemy.orm import Mapped
 
-from node_agent.model.db import Base, column_string_null, column_foreign_key, \
-    column_relationship_list, column_relationship
-from node_agent.model.oasis.node import OasisNode
+from node_agent.model.db import (
+    Base,
+    intpk,
+    column_name,
+    column_string_null,
+    column_foreign_key,
+    column_relationship,
+)
+from sqlalchemy.orm import Mapped
+from node_agent.model.db import (
+    column_id,
+    column_time_created,
+    column_time_updated,
+)
+from datetime import datetime
 
 
 class OasisNodetype(Base):
-    __tablename__ = 'oasis_nodetype'
+    __tablename__ = "oasis_nodetype"
+    id: Mapped[intpk] = column_id()
+    time_create: Mapped[datetime] = column_time_created()
+    time_updated: Mapped[datetime] = column_time_updated()
+
+    name: Mapped[str] = column_name()
 
     core_version: Mapped[str] = column_string_null()
     runtime_identifier: Mapped[str] = column_string_null()
@@ -18,11 +35,5 @@ class OasisNodetype(Base):
     paratime_worker_p2p_port: Mapped[str] = column_string_null()
     node_ssh_id: Mapped[str] = column_string_null()
 
-    network_id: Mapped[int] = column_foreign_key(
-        "oasis_network.id")
+    network_id: Mapped[int] = column_foreign_key("oasis_network.id")
     network: Mapped["OasisNetwork"] = column_relationship()
-
-    node = column_relationship_list(
-        OasisNode,
-        back_populates="nodetype"
-    )

@@ -61,12 +61,26 @@ def column_string_null() -> Mapped[typing.Optional[str]]:
     )
 
 
-def column_foreign_key(key):
+def column_foreign_key(key, primary_key=False):
+    if primary_key:
+        nullable = False
+    else:
+        nullable = True
     return mapped_column(
         Integer,
         ForeignKey(key),
-        nullable=True,
+        primary_key=primary_key,
+        nullable=nullable,
         default=None,
+    )
+
+
+def column_relationship_many_to_many(mapped, secondary, back_populates=None):
+    return relationship(
+        mapped,
+        back_populates=back_populates,
+        secondary=secondary,
+        default_factory=list,
     )
 
 
@@ -84,7 +98,4 @@ def column_relationship(foreign_keys=None):
 
 
 class Base(MappedAsDataclass, DeclarativeBase):
-    id: Mapped[intpk] = column_id()
-    name: Mapped[str] = column_name()
-    time_create: Mapped[datetime] = column_time_created()
-    time_updated: Mapped[datetime] = column_time_updated()
+    pass
