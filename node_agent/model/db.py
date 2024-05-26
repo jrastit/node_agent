@@ -3,12 +3,13 @@ import typing
 from datetime import datetime
 from typing import Annotated
 
-from dataclasses_jsonschema import JsonSchemaMixin
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from sqlalchemy import String, Integer, ForeignKey, column
 from sqlalchemy.orm import Mapped, MappedAsDataclass, relationship
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import DeclarativeBase
+
 
 db = SQLAlchemy()
 
@@ -87,11 +88,3 @@ class Base(MappedAsDataclass, DeclarativeBase):
     name: Mapped[str] = column_name()
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
-
-
-
-
-
-
-
-

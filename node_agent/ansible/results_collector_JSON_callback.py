@@ -1,18 +1,10 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 import json
-import shutil
 
-import ansible.constants as C
-from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.module_utils.common.collections import ImmutableDict
-from ansible.inventory.manager import InventoryManager
-from ansible.parsing.dataloader import DataLoader
-from ansible.playbook.play import Play
 from ansible.plugins.callback import CallbackBase
-from ansible.vars.manager import VariableManager
-from ansible import context
 
 
 # Create a callback plugin so we can capture the output

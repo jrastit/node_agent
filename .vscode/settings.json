@@ -1,0 +1,12 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.analysis.extraPaths": [
+        "src/stellar-flask"
+    ],
+    "black-formatter.args": ["--line-length", "79"],
+    "python.analysis.diagnosticMode": "workspace",
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+}

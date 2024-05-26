@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-import json
 import shutil
 
 import ansible.constants as C
@@ -12,27 +12,42 @@ from ansible.module_utils.common.collections import ImmutableDict
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play import Play
-from ansible.plugins.callback import CallbackBase
 from ansible.vars.manager import VariableManager
 from ansible import context
 
-from node_agent.ansible.results_collector_JSON_callback import ResultsCollectorJSONCallback
+from node_agent.ansible.results_collector_JSON_callback import (
+    ResultsCollectorJSONCallback,
+)
 
 
-def main():
-    host_list = ['localhost']
+def ansible_run():
+    host_list = ["localhost"]
     # since the API is constructed for CLI it expects certain options to always be set in the context object
-    context.CLIARGS = ImmutableDict(connection='smart', module_path=['/to/mymodules', '/usr/share/ansible'], forks=10, become=None,
-                                    become_method=None, become_user=None, check=False, diff=False, verbosity=0)
+    context.CLIARGS = ImmutableDict(
+        connection="smart",
+        module_path=[
+            "/usr/lib/python3/dist-packages",
+            "/usr/share/ansible",
+        ],
+        forks=10,
+        become=None,
+        become_method=None,
+        become_user=None,
+        check=False,
+        diff=False,
+        verbosity=0,
+    )
     # required for
     # https://github.com/ansible/ansible/blob/devel/lib/ansible/inventory/manager.py#L204
-    sources = ','.join(host_list)
+    sources = ",".join(host_list)
     if len(host_list) == 1:
-        sources += ','
+        sources += ","
 
     # initialize needed objects
-    loader = DataLoader()  # Takes care of finding and reading yaml, json and ini files
-    passwords = dict(vault_pass='secret')
+    loader = (
+        DataLoader()
+    )  # Takes care of finding and reading yaml, json and ini files
+    passwords = dict(vault_pass="secret")
 
     # Instantiate our ResultsCollectorJSONCallback for handling results as they come in. Ansible expects this to be one of its main display outlets
     results_callback = ResultsCollectorJSONCallback()
@@ -58,21 +73,31 @@ def main():
     play_source = dict(
         name="Ansible Play",
         hosts=host_list,
-        gather_facts='no',
+        gather_facts="no",
         tasks=[
-            dict(action=dict(module='shell', args='ls'), register='shell_out'),
-            dict(action=dict(module='debug', args=dict(msg='{{shell_out.stdout}}'))),
-            dict(action=dict(module='command', args=dict(cmd='/usr/bin/uptime'))),
-        ]
+            dict(action=dict(module="shell", args="ls"), register="shell_out"),
+            dict(
+                action=dict(
+                    module="debug", args=dict(msg="{{shell_out.stdout}}")
+                )
+            ),
+            dict(
+                action=dict(module="command", args=dict(cmd="/usr/bin/uptime"))
+            ),
+        ],
     )
 
     # Create play object, playbook objects use .load instead of init or new methods,
     # this will also automatically create the task objects from the info provided in play_source
-    play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
+    play = Play().load(
+        play_source, variable_manager=variable_manager, loader=loader
+    )
 
     # Actually run it
     try:
-        result = tqm.run(play)  # most interesting data for a play is actually sent to the callback's methods
+        result = tqm.run(
+            play
+        )  # most interesting data for a play is actually sent to the callback's methods
     finally:
         # we always need to cleanup child procs and the structures we use to communicate with them
         tqm.cleanup()
@@ -84,16 +109,12 @@ def main():
 
     print("UP ***********")
     for host, result in results_callback.host_ok.items():
-        print('{0} >>> {1}'.format(host, result._result['stdout']))
+        print("{0} >>> {1}".format(host, result._result["stdout"]))
 
     print("FAILED *******")
     for host, result in results_callback.host_failed.items():
-        print('{0} >>> {1}'.format(host, result._result['msg']))
+        print("{0} >>> {1}".format(host, result._result["msg"]))
 
     print("DOWN *********")
     for host, result in results_callback.host_unreachable.items():
-        print('{0} >>> {1}'.format(host, result._result['msg']))
-
-
-if __name__ == '__main__':
-    main()
+        print("{0} >>> {1}".format(host, result._result["msg"]))

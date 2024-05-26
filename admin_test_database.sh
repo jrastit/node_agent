@@ -1,0 +1,1 @@
+psql -h 127.0.0.1 -U node_agent --password node_agent_test

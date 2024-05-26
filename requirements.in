@@ -1,6 +1,4 @@
 dynaconf
-apispec
-apispec_webframeworks
 dataclasses_jsonschema
 sqlalchemy
 flask_swagger_ui
@@ -15,4 +13,5 @@ decorators
 gunicorn
 grpcio
 ansible
+ansible-base
 
