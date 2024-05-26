@@ -1,8 +1,8 @@
-from node_agent.service.oasis.oasis_config import get_confile_from_md_file
+from node_agent.service.oasis.oasis_config import get_configue_from_md_file
 
 
 def test_get_md_values():
-    ret = get_confile_from_md_file("resources/mainnet/README.md")
+    ret = get_configue_from_md_file("resources/mainnet/README.md")
     assert ret is not None
     assert "network" in ret
     assert "network_genesis_file" in ret
@@ -25,7 +25,7 @@ def test_get_md_values():
         == "https://github.com/oasisprotocol/oasis-core/releases/tag/v23.0.11"
     )
 
-    ret = get_confile_from_md_file("resources/testnet/README.md")
+    ret = get_configue_from_md_file("resources/testnet/README.md")
     assert ret is not None
     assert "network" in ret
     assert "network_genesis_file" in ret

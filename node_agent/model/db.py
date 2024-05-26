@@ -61,6 +61,14 @@ def column_string_null() -> Mapped[typing.Optional[str]]:
     )
 
 
+def column_bool_null() -> Mapped[typing.Optional[str]]:
+    return mapped_column(
+        bool,
+        nullable=True,
+        default=None,
+    )
+
+
 def column_foreign_key(key, primary_key=False):
     if primary_key:
         nullable = False

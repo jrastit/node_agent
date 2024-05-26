@@ -110,13 +110,13 @@ def _get_value_list(section, i, value_list, str1, str2=None):
     return value_list
 
 
-def get_confile_from_md_file(md_file):
+def get_configue_from_md_file(md_file):
     with open(md_file, "r") as file:
         data = file.read()
-    return get_confile_from_md(data)
+    return get_configue_from_md(data)
 
 
-def get_confile_from_md(data: str):
+def get_configue_from_md(data: str):
     network = None
     network_genesis_file = None
     network_seed_node = []
