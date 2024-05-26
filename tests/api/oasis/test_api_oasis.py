@@ -1,8 +1,6 @@
 from node_agent.service.oasis_config import export_oasis_config
 from tests.utils.api_util import (
     api_put_data,
-    api_simple_get,
-    api_simple_delete,
 )
 
 
@@ -67,14 +65,76 @@ def test_api_oasis_node(app):
         {
             "name": "test_node_api",
             "entity_id": entity_id,
-            "nodetype_id": node_type_id,
+            "nodetype_id": [node_type_id],
         },
     )
     assert "OasisNode" in node_handler
     node = node_handler["OasisNode"]
     assert "id" in node
     node_id = node["id"]
+    assert node_id is not None
     assert "name" in node
     assert node["name"] == "test_node_api"
+    assert node["entity_id"] == entity_id
+    assert len(node["nodetype"]) == 1
+
+    node_handler = api_put_data(
+        "/api/oasis/node",
+        200,
+        {
+            "id": node_id,
+            "name": "test_node_api",
+            "entity_id": entity_id,
+            "nodetype_id": [node_type_id],
+        },
+    )
+    assert "OasisNode" in node_handler
+    node = node_handler["OasisNode"]
+    assert "id" in node
+    node_id = node["id"]
+    assert node_id is not None
+    assert "name" in node
+    assert node["name"] == "test_node_api"
+    assert node["entity_id"] == entity_id
+    assert len(node["nodetype"]) == 1
+
+    node_handler = api_put_data(
+        "/api/oasis/node",
+        200,
+        {
+            "id": node_id,
+            "name": "test_node_api",
+            "entity_id": entity_id,
+        },
+    )
+    assert "OasisNode" in node_handler
+    node = node_handler["OasisNode"]
+    assert "id" in node
+    node_id = node["id"]
+    assert node_id is not None
+    assert "name" in node
+    assert node["name"] == "test_node_api"
+    assert node["entity_id"] == entity_id
+    assert len(node["nodetype"]) == 0
+
+    node_handler = api_put_data(
+        "/api/oasis/node",
+        200,
+        {
+            "id": node_id,
+            "name": "test_node_api",
+            "entity_id": entity_id,
+            "nodetype_id": [node_type_id],
+        },
+    )
+    assert "OasisNode" in node_handler
+    node = node_handler["OasisNode"]
+    assert "id" in node
+    node_id = node["id"]
+    assert node_id is not None
+    assert "name" in node
+    assert node["name"] == "test_node_api"
+    assert node["entity_id"] == entity_id
+    assert len(node["nodetype"]) == 1
 
     node_handler = api_put_data("/api/oasis/config/save", 200, {})

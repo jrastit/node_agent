@@ -2,15 +2,21 @@ from node_agent.model.db import db
 from flask import jsonify
 
 
-def inset_or_update_object_from_json(mapper, data):
-    if 'id' not in data or not data['id']:
+def inset_or_update_object_from_json_raw(mapper, data):
+    if "id" not in data or not data["id"]:
         # user = User(**{k: v for k, v in obj.items() if k in {'id', 'name'}})
         db.session.bulk_insert_mappings(mapper, [data])
     else:
         db.session.bulk_update_mappings(mapper, [data])
     db.session.commit()
-    server = db.session.query(mapper).filter_by(name=data['name']).first()
-    return jsonify({mapper.__name__: server})
+    ret = db.session.query(mapper).filter_by(name=data["name"]).first()
+    return ret
+
+
+def inset_or_update_object_from_json(mapper, data):
+    return jsonify(
+        {mapper.__name__: inset_or_update_object_from_json_raw(mapper, data)}
+    )
 
 
 def get_object_list(mapper):

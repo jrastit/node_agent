@@ -1,7 +1,10 @@
 #!/usr/bin/3
-from flask import request, Blueprint
+from flask import jsonify, request, Blueprint
 
 from node_agent.api.api_key import require_appkey
+from node_agent.data.oasis.oasis_node_data import (
+    oasis_node_data_update_nodetype,
+)
 from node_agent.model.oasis.nodetype import OasisNodetype
 from node_agent.model.oasis.node import OasisNode
 from node_agent.model.oasis.network import OasisNetwork
@@ -14,6 +17,7 @@ from node_agent.utils.db_util import (
     inset_or_update_object_from_json,
     delete_object,
     get_object_list,
+    inset_or_update_object_from_json_raw,
 )
 
 oasis_api = Blueprint("oasis_api", __name__)
@@ -22,7 +26,9 @@ oasis_api = Blueprint("oasis_api", __name__)
 @oasis_api.route("/api/oasis/node", methods=["PUT"])
 @require_appkey
 def api_oasis_node_put():
-    return inset_or_update_object_from_json(OasisNode, request.json)
+    ret = inset_or_update_object_from_json_raw(OasisNode, request.json)
+    oasis_node_data_update_nodetype(ret, request.json)
+    return jsonify({OasisNode.__name__: ret})
 
 
 @oasis_api.route("/api/oasis/nodetype", methods=["PUT"])
