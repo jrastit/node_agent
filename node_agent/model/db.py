@@ -55,7 +55,7 @@ def column_name():
 
 def column_string_null() -> Mapped[typing.Optional[str]]:
     return mapped_column(
-        String,
+        db.String,
         nullable=True,
         default=None,
     )
@@ -63,7 +63,7 @@ def column_string_null() -> Mapped[typing.Optional[str]]:
 
 def column_bool_null() -> Mapped[typing.Optional[str]]:
     return mapped_column(
-        bool,
+        db.Boolean,
         nullable=True,
         default=None,
     )
@@ -95,7 +95,7 @@ def column_relationship_many_to_many(
     )
 
 
-def column_relationship_list(mapped, back_populates, foreign_keys=None):
+def column_relationship_list(mapped, back_populates=None, foreign_keys=None):
     return relationship(
         mapped,
         back_populates=back_populates,

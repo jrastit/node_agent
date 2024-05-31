@@ -2,7 +2,10 @@ from datetime import datetime
 from sqlalchemy.orm import Mapped
 
 from node_agent.model.db import (
+    db,
     Base,
+    column_foreign_key,
+    column_relationship,
     intpk,
     column_id,
     column_name,
@@ -31,10 +34,18 @@ class OasisConfig(Base):
 
     validate: Mapped[bool] = column_bool_null()
 
+    oasis_config_paratime: Mapped[list["OasisParatimeConfig"]] = (
+        column_relationship_list(
+            "OasisParatimeConfig",
+            # back_populates="oasis_config"
+        )
+    )
+
 
 class OasisParatimeConfig(Base):
     __tablename__ = "oasis_paratime_config"
     id: Mapped[intpk] = column_id()
+
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
 
@@ -46,7 +57,7 @@ class OasisParatimeConfig(Base):
     runtime_version_url: Mapped[str] = column_string_null()
     IAS_proxy: Mapped[str] = column_string_null()
 
-    oasis_config_id: Mapped[int] = column_id()
-    oasis_config = column_relationship_list(
-        OasisConfig, back_populates="oasis_paratime_config"
-    )
+    oasis_config_id: Mapped[int] = column_foreign_key("oasis_config.id")
+    # oasis_config: Mapped["OasisConfig"] = db.relationship(
+    #     back_populates="oasis_config_paratime"
+    # )
