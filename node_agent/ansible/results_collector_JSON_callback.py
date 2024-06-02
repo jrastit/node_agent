@@ -2,9 +2,12 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+import logging
 import json
 
 from ansible.plugins.callback import CallbackBase
+
+logger = logging.getLogger()
 
 
 # Create a callback plugin so we can capture the output
@@ -33,7 +36,7 @@ class ResultsCollectorJSONCallback(CallbackBase):
         """
         host = result._host
         self.host_ok[host.get_name()] = result
-        print(json.dumps({host.name: result._result}, indent=4))
+        logger.info(json.dumps({host.name: result._result}, indent=4))
 
     def v2_runner_on_failed(self, result, *args, **kwargs):
         host = result._host

@@ -12,6 +12,7 @@ from node_agent.model.db import db, Base
 from node_agent.api.test.api_test import test_api
 from node_agent.api.server.api_server import server_api
 from node_agent.api.oasis.api_oasis import oasis_api
+from node_agent.api.oasis.api_oasis_config import oasis_config
 
 
 def init_app():
@@ -35,6 +36,7 @@ def init_app():
     app.register_blueprint(test_api)
     app.register_blueprint(server_api)
     app.register_blueprint(oasis_api)
+    app.register_blueprint(oasis_config)
     # Support OpenApi V3
     # app.config["SWAGGER"]['openapi'] = '3.0.2'
     Base.metadata.create_all(db.engine)

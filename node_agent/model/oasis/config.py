@@ -36,8 +36,7 @@ class OasisConfig(Base):
 
     oasis_config_paratime: Mapped[list["OasisParatimeConfig"]] = (
         column_relationship_list(
-            "OasisParatimeConfig",
-            # back_populates="oasis_config"
+            "OasisParatimeConfig", back_populates="oasis_config"
         )
     )
 
@@ -58,6 +57,6 @@ class OasisParatimeConfig(Base):
     IAS_proxy: Mapped[str] = column_string_null()
 
     oasis_config_id: Mapped[int] = column_foreign_key("oasis_config.id")
-    # oasis_config: Mapped["OasisConfig"] = db.relationship(
-    #     back_populates="oasis_config_paratime"
-    # )
+    oasis_config: Mapped["OasisConfig"] = column_relationship(
+        foreign_keys="OasisParatimeConfig.oasis_config_id"
+    )

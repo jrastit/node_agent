@@ -1,11 +1,7 @@
-import dataclasses
 import typing
-from datetime import datetime
 from typing import Annotated
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
-from sqlalchemy import String, Integer, ForeignKey, column
 from sqlalchemy.orm import Mapped, MappedAsDataclass, relationship
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import DeclarativeBase
@@ -75,8 +71,8 @@ def column_foreign_key(key, primary_key=False):
     else:
         nullable = True
     return mapped_column(
-        Integer,
-        ForeignKey(key),
+        db.Integer,
+        db.ForeignKey(key),
         primary_key=primary_key,
         nullable=nullable,
         default=None,

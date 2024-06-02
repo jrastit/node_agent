@@ -1,20 +1,26 @@
+import logging
+
 from dataclasses import asdict
 from node_agent.config import settings
 from node_agent.model.db import db
 from node_agent.model.oasis.node import OasisNode
 from tests.utils.api_util import api_put_data
 
+logger = logging.getLogger()
+
 
 def load_test_node():
 
-    node = (
+    node_db = (
         db.session.query(OasisNode)
         .filter(OasisNode.name == settings.test_node_name)
         .first()
     )
 
-    if node is not None:
-        return asdict(node)
+    if node_db is not None:
+        node = asdict(node_db)
+        assert node["entrypoint"]["server"]["ip"] == settings.test_node_address
+        return node
 
     server_handler = api_put_data(
         "/api/server",
@@ -28,6 +34,9 @@ def load_test_node():
     server = server_handler["Server"]
     assert "id" in server
     server_id = server["id"]
+    assert "ip" in server
+    assert "name" in server
+    assert server["ip"] == settings.test_node_address
 
     entrypoint_handler = api_put_data(
         "/api/server/entrypoint",
@@ -43,6 +52,10 @@ def load_test_node():
     assert "Entrypoint" in entrypoint_handler
     entrypoint = entrypoint_handler["Entrypoint"]
     assert "id" in entrypoint
+    assert "path" in entrypoint
+    assert "user" in entrypoint
+    assert "server_id" in entrypoint
+    assert "ssh_id" in entrypoint
     entrypoint_id = entrypoint["id"]
 
     entrypoint_admin_handler = api_put_data(
@@ -111,6 +124,7 @@ def load_test_node():
             "name": settings.test_node_name,
             "node_address": settings.test_node_address,
             "node_port": settings.test_node_port,
+            "core_version": settings.test_core_version,
             "server_id": server_id,
             "entity_id": entity_id,
             "entrypoint_id": entrypoint_id,
@@ -125,4 +139,5 @@ def load_test_node():
     assert "OasisNode" in node_handler
     node = node_handler["OasisNode"]
     assert "id" in node
+    # logger.info(f"Node: {node}")
     return node

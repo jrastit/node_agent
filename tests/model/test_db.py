@@ -10,7 +10,7 @@ from node_agent.model.db import db
 
 
 def test_db(app):
-    server = Server(name="test_server", ip="34.155.3.8")
+    server = Server(name="test_server", ip="127.0.0.1")
     app.app_context()
     db.session.add(server)
     entrypoint = Entrypoint(
