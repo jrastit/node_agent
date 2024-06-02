@@ -23,3 +23,23 @@ def oasis_node_data_update_nodetype(node, data):
             )
         )
     db.session.commit()
+
+
+def oasis_node_set_node_id(node, node_id):
+    db.session.execute(
+        text(
+            f"UPDATE oasis_node SET node_id='{node_id}' WHERE id={node['id']}"
+        )
+    )
+    db.session.commit()
+    return node_id
+
+
+def oasis_node_set_core_version(node, core_version):
+    db.session.execute(
+        text(
+            f"UPDATE oasis_node SET core_version='{core_version}' WHERE id={node['id']}"
+        )
+    )
+    db.session.commit()
+    return core_version

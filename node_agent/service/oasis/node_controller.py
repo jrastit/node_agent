@@ -29,5 +29,5 @@ def oasis_node_get_json_info_from_command(
     ip = oasis_node["entrypoint"]["server"]["ip"]
     if ip is None:
         raise Exception("Remote node entrypoint/server/ip is not defined")
-    status = execute_remote_command_to_json(cmd, user, ip)
+    status = execute_remote_command_to_json(cmd, remote_node_path, user, ip)
     return status

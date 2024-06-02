@@ -36,7 +36,7 @@ class ResultsCollectorJSONCallback(CallbackBase):
         """
         host = result._host
         self.host_ok[host.get_name()] = result
-        logger.info(json.dumps({host.name: result._result}, indent=4))
+        # logger.info(json.dumps({host.name: result._result}, indent=4))
 
     def v2_runner_on_failed(self, result, *args, **kwargs):
         host = result._host
