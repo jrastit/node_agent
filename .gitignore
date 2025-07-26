@@ -4,4 +4,5 @@ __pycache__
 private_env.sh
 /settings/.secrets.yaml
 /export
+.DS_Store
 
