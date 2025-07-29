@@ -1,0 +1,35 @@
+[project]
+name = "node-agent"
+version = "0.1.0"
+description = "Node Agent"
+authors = [
+    { name = "Jerome Rastit" }
+]
+dependencies = [
+    "dynaconf",
+    "dataclasses_jsonschema",
+    "sqlalchemy",
+    "flask_swagger_ui",
+    "Flask",
+    "flask-cors",
+    "flask_restful",
+    "psycopg2",
+    "psycopg2-binary",
+    "Flask-SQLAlchemy",
+    "decorators",
+    "gunicorn",
+    "grpcio",
+    "ansible",
+    "ansible-base"
+]
+[project.optional-dependencies]
+test = [
+    "flake8",
+    "pylint",
+    "pylint-exit",
+    "anybadge",
+    "pytest",
+    "pytest-cov",
+    "pytest-flask",
+    "pytest-mock"
+]

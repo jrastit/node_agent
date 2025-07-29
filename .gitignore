@@ -5,4 +5,7 @@ private_env.sh
 /settings/.secrets.yaml
 /export
 .DS_Store
+python_utils
+*.egg-info
+/settings
 
