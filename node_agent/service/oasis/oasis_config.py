@@ -2,6 +2,7 @@ import dataclasses
 from datetime import date
 from datetime import datetime
 import json
+import os
 
 from flask import jsonify
 from node_agent.model.db import db
@@ -21,6 +22,13 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 def export_oasis_config(json_file):
     oasis_node_list = {OasisNode.__name__: db.session.query(OasisNode).all()}
+
+    # create the directories path for the JSON file
+    path_parts = json_file.split("/")
+    if len(path_parts) > 1:
+        directory = "/".join(path_parts[:-1])
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
     # Write the config data to a JSON file
     with open(json_file, "w") as file:

@@ -4,7 +4,7 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 
 from node_agent.api.api_swagger import swaggerui_blueprint
-from node_agent.config import settings
+from node_agent.config import get_databaste_uri, settings
 
 from node_agent.global_var import set_app
 from node_agent.model.db import db, Base
@@ -22,7 +22,7 @@ def init_app():
     CORS(app)
     # configure the Postgres database
     # app.config['SQLALCHEMY_ECHO'] = True
-    app.config["SQLALCHEMY_DATABASE_URI"] = settings.db_dsn
+    app.config["SQLALCHEMY_DATABASE_URI"] = get_databaste_uri()
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "connect_args": {
             "connect_timeout": 5,

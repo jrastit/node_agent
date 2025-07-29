@@ -5,12 +5,12 @@ from flask import Flask
 from node_agent.model.db import db
 from sqlalchemy import inspect, text
 
-from node_agent.config import settings
+from node_agent.config import get_databaste_uri
 
 # Create the web app
 app = Flask(__name__)
 # configure the Postgres database
-app.config["SQLALCHEMY_DATABASE_URI"] = settings.db_dsn
+app.config["SQLALCHEMY_DATABASE_URI"] = get_databaste_uri()
 # initialize the app with the extension
 
 db.init_app(app)
@@ -25,5 +25,7 @@ with app.app_context():
             print("Table: %s" % table_name)
             # for column in inspector.get_columns(table_name, schema=schema):
             #    print("Column: %s" % column)
-            db.session.execute(text('DROP TABLE IF EXISTS %s CASCADE' % table_name))
+            db.session.execute(
+                text("DROP TABLE IF EXISTS %s CASCADE" % table_name)
+            )
     db.session.commit()

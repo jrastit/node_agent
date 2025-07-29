@@ -10,7 +10,7 @@ dependencies = [
     "dataclasses_jsonschema",
     "sqlalchemy",
     "flask_swagger_ui",
-    "Flask",
+    "Flask<3",
     "flask-cors",
     "flask_restful",
     "psycopg2",

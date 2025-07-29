@@ -1,0 +1,2 @@
+export PYTHON_UTILS_DYNACONF_PACKAGE="node_agent"
+export PYTHON_UTILS_PROJECT_PACKAGE="node_agent"
