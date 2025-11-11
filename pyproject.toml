@@ -20,7 +20,8 @@ dependencies = [
     "gunicorn",
     "grpcio",
     "ansible",
-    "ansible-base"
+    "ansible-base",
+    "supabase"
 ]
 [project.optional-dependencies]
 test = [

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-virtualenv -p python3 venv
+virtualenv -p python3.11 venv
 
 source venv/bin/activate
 
