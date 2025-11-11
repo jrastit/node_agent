@@ -9,4 +9,4 @@ python_utils
 *.egg-info
 /settings
 /venv
-
+.env*
