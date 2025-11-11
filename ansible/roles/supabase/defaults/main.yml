@@ -1,0 +1,25 @@
+---
+supabase_install_dir: /opt/supabase
+supabase_local_user: "{{ ansible_user_id | default(ansible_env.USER) }}"
+supabase_repo_url: https://github.com/supabase/supabase.git
+supabase_repo_version: master
+supabase_repo_subdir: docker
+supabase_repo_checkout_dir: "{{ supabase_install_dir }}/supabase-config"
+supabase_compose_url: https://raw.githubusercontent.com/supabase/supabase/master/docker/docker-compose.yml
+supabase_env_url: https://raw.githubusercontent.com/supabase/supabase/master/docker/.env.example
+supabase_project_name: supabase
+supabase_env_force_overwrite: false
+supabase_package_dependencies:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+supabase_docker_repo_prereq_packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+supabase_docker_arch_map:
+  x86_64: amd64
+  aarch64: arm64

@@ -1,0 +1,78 @@
+- name: Install Supabase assets from git
+  tags:
+    - supabase_install
+  vars:
+    supabase_controller_user: "{{ ansible_user_id | default(ansible_env.USER) }}"
+  become: "{{ (supabase_local_user | default(supabase_controller_user)) != supabase_controller_user }}"
+  become_user: "{{ supabase_local_user }}"
+  block:
+    - name: Update Supabase config checkout
+      ansible.builtin.git:
+        repo: "{{ supabase_repo_url }}"
+        dest: "{{ supabase_repo_checkout_dir }}"
+        version: "{{ supabase_repo_version }}"
+        update: true
+
+    - name: Copy docker-compose.yml from checkout
+      ansible.builtin.copy:
+        src: "{{ supabase_repo_checkout_dir }}/{{ supabase_repo_subdir }}/docker-compose.yml"
+        dest: "{{ supabase_install_dir }}/docker-compose.yml"
+        remote_src: true
+        owner: "{{ supabase_local_user }}"
+        group: "{{ supabase_local_user }}"
+        mode: "0644"
+
+    - name: Check whether Supabase volumes directory exists
+      ansible.builtin.stat:
+        path: "{{ supabase_install_dir }}/volumes"
+      register: supabase_volumes_dir
+
+    - name: Copy Supabase volumes directory
+      ansible.builtin.copy:
+        src: "{{ supabase_repo_checkout_dir }}/{{ supabase_repo_subdir }}/volumes/"
+        dest: "{{ supabase_install_dir }}/volumes/"
+        remote_src: true
+        owner: "{{ supabase_local_user }}"
+        group: "{{ supabase_local_user }}"
+        mode: "0644"
+        directory_mode: "0755"
+      when: not supabase_volumes_dir.stat.exists
+
+    - name: Check whether Supabase .env exists
+      ansible.builtin.stat:
+        path: "{{ supabase_install_dir }}/.env"
+      register: supabase_env_file
+
+    - name: Create Supabase .env from example when missing
+      ansible.builtin.copy:
+        src: "{{ supabase_repo_checkout_dir }}/{{ supabase_repo_subdir }}/.env.example"
+        dest: "{{ supabase_install_dir }}/.env"
+        remote_src: true
+        owner: "{{ supabase_local_user }}"
+        group: "{{ supabase_local_user }}"
+        mode: "0640"
+      when: not supabase_env_file.stat.exists
+
+- name: Manage Supabase stack with docker compose (user)
+  tags:
+    - supabase_user
+  vars:
+    supabase_controller_user: "{{ ansible_user_id | default(ansible_env.USER) }}"
+  become: "{{ (supabase_local_user | default(supabase_controller_user)) != supabase_controller_user }}"
+  become_user: "{{ supabase_local_user }}"
+  block:
+    - name: Pull Supabase Docker images
+      ansible.builtin.command:
+        cmd: docker compose -p {{ supabase_project_name }} pull
+        chdir: "{{ supabase_install_dir }}"
+      register: supabase_pull
+      changed_when: "'Pulling' in supabase_pull.stdout or 'Downloading' in supabase_pull.stdout"
+      tags: docker
+
+    - name: Start Supabase stack
+      ansible.builtin.command:
+        cmd: docker compose -p {{ supabase_project_name }} up -d
+        chdir: "{{ supabase_install_dir }}"
+      register: supabase_up
+      changed_when: "'is up-to-date' not in supabase_up.stdout"
+      tags: docker

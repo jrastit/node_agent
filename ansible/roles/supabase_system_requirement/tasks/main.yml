@@ -1,0 +1,69 @@
+---
+- name: Install Docker engine and lay down Supabase files
+  tags:
+    - supabase_root
+    - supabase_system
+  become: true
+  block:
+    - name: Update apt cache when available
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_facts.os_family == "Debian"
+      tags: packages
+
+    - name: Install Docker repository prerequisites (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: "{{ supabase_docker_repo_prereq_packages }}"
+        state: present
+      when: ansible_facts.os_family == "Debian"
+      tags: packages
+
+    - name: Add Docker GPG apt key (Debian/Ubuntu)
+      ansible.builtin.apt_key:
+        url: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
+        keyring: /etc/apt/trusted.gpg.d/docker.gpg
+        state: present
+      when: ansible_facts.os_family == "Debian"
+      tags: docker
+
+    - name: Add Docker apt repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ supabase_docker_arch_map[ansible_facts.architecture] | default(ansible_facts.architecture) }}]
+          https://download.docker.com/linux/{{ ansible_facts.distribution | lower }} {{ ansible_facts.distribution_release }} stable
+        filename: docker
+        update_cache: true
+        state: present
+      when: ansible_facts.os_family == "Debian"
+      tags: docker
+
+    - name: Install Docker engine and helper packages
+      ansible.builtin.package:
+        name: "{{ supabase_package_dependencies }}"
+        state: present
+      tags: packages
+
+    - name: Ensure Docker service is enabled
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+      tags: docker
+
+    - name: Ensure Supabase install directory exists
+      ansible.builtin.file:
+        path: "{{ supabase_install_dir }}"
+        state: directory
+        owner: "{{ supabase_local_user }}"
+        group: "{{ supabase_local_user }}"
+        mode: "0755"
+      tags: files
+
+    - name: Ensure Supabase user is part of docker group
+      ansible.builtin.user:
+        name: "{{ supabase_local_user }}"
+        state: present
+        groups: docker
+        append: true
+      tags: docker
