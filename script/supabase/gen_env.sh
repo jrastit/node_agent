@@ -23,7 +23,7 @@ rand_alnum() {         # N alnum chars, robust on macOS/BSD
 # ---------- generate values ----------
 POSTGRES_PASSWORD="$(rand_alnum 16)"                  # 16 alnum
 JWT_SECRET_HEX="$(rand_hex 32)"                       # 32 bytes -> 64 hex chars (HS256 secret)
-SECRET_KEY_BASE="$(rand_hex 32)"                      # 32 bytes -> 64 hex chars
+SECRET_KEY_BASE="$(rand_b64_bytes 48)"                      # 32 bytes -> 64 hex chars
 VAULT_ENC_KEY="$(rand_hex 16)"                        # 16 bytes -> 32 hex chars (raw 32 chars total)
 PG_META_CRYPTO_KEY="$(rand_b64_bytes 32)"             # base64(32 bytes)
 DASHBOARD_USERNAME="$(rand_alnum 8)"
@@ -32,33 +32,7 @@ DASHBOARD_PASSWORD="$(rand_alnum 16)"
 # ---------- generate JWTs (Anon / Service Role) ----------
 # Uses Python stdlib only; signs with HS256 using JWT_SECRET_HEX.
 export JWT_SECRET_HEX
-readarray -t JWT_KEYS < <(python3 - <<'PY'
-import os, time, json, base64, hmac, hashlib, sys
-
-secret_hex = os.environ.get("JWT_SECRET_HEX")
-if not secret_hex:
-  print("ERROR: JWT_SECRET_HEX not set", file=sys.stderr)
-  sys.exit(1)
-secret = bytes.fromhex(secret_hex)
-
-def b64url(b: bytes) -> bytes:
-  return base64.urlsafe_b64encode(b).rstrip(b'=')
-
-def jwt(payload: dict) -> str:
-  header = {"alg":"HS256","typ":"JWT"}
-  enc = lambda o: b64url(json.dumps(o, separators=(',',':')).encode())
-  msg = enc(header) + b'.' + enc(payload)
-  sig = b64url(hmac.new(secret, msg, hashlib.sha256).digest())
-  return (msg + b'.' + sig).decode()
-
-now = int(time.time())
-year = 60*60*24*365
-anon = jwt({"role":"anon","iss":"supabase","iat":now,"exp":now+year})
-service = jwt({"role":"service_role","iss":"supabase","iat":now,"exp":now+year,"service_role":True})
-print(anon)
-print(service)
-PY
-)
+readarray -t JWT_KEYS < <(python3 "$PWD/../../node_agent/utils/jwt_util.py" --secret "$JWT_SECRET_HEX" --mode generate)
 ANON_KEY="${JWT_KEYS[0]}"
 SERVICE_ROLE_KEY="${JWT_KEYS[1]}"
 
@@ -91,37 +65,4 @@ awk -F= '/^SERVICE_ROLE_KEY=/{print "SERVICE_ROLE_KEY length:", length($2)}' .en
 awk -F= '/^DASHBOARD_USERNAME=/{print "DASHBOARD_USERNAME length:", length($2)}' .env.local         # expect 8
 awk -F= '/^DASHBOARD_PASSWORD=/{print "DASHBOARD_PASSWORD length:", length($2)}' .env.local # expect 16
 
-export ANON_KEY
-export JWT_SECRET_HEX
-export SERVICE_ROLE_KEY
-
-python3 - <<'PY'
-import os, jwt, binascii
-
-def check_token(token_env, secret_env):
-    token = os.environ.get(token_env)
-    secret_raw = os.environ.get(secret_env)
-
-    if not token or not secret_raw:
-        print(f"❌ Please set {token_env} and {secret_env} env vars")
-        return
-
-    try:
-        secret = bytes.fromhex(secret_raw)
-    except (binascii.Error, ValueError):
-        secret = secret_raw.encode()
-
-    try:
-        decoded = jwt.decode(token, secret, algorithms=["HS256"])
-        print(f"✅ {token_env} is valid!")
-        print(decoded)
-    except jwt.ExpiredSignatureError:
-        print(f"❌ {token_env} has expired")
-    except jwt.InvalidSignatureError:
-        print(f"❌ Invalid signature — wrong secret for {token_env}")
-    except Exception as e:
-        print(f"❌ Other error for {token_env}:", e)
-
-check_token("ANON_KEY", "JWT_SECRET_HEX")
-check_token("SERVICE_ROLE_KEY", "JWT_SECRET_HEX")
-PY
+./check_env.sh .env.local
