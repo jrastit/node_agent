@@ -4,6 +4,8 @@
 #
 #    pip-compile --extra=test --output-file=requirements_test.txt pyproject.toml
 #
+alembic==1.18.1
+    # via node-agent (pyproject.toml)
 aniso8601==10.0.1
     # via flask-restful
 annotated-types==0.7.0
@@ -116,9 +118,12 @@ jsonschema-specifications==2025.4.1
     # via jsonschema
 lazy-object-proxy==1.9.0
     # via astroid
+mako==1.3.10
+    # via alembic
 markupsafe==2.1.3
     # via
     #   jinja2
+    #   mako
     #   werkzeug
 mccabe==0.7.0
     # via
@@ -206,6 +211,7 @@ sniffio==1.3.1
     # via anyio
 sqlalchemy==2.0.42
     # via
+    #   alembic
     #   flask-sqlalchemy
     #   node-agent (pyproject.toml)
 storage3==2.24.0
@@ -222,6 +228,7 @@ tomlkit==0.11.8
     # via pylint
 typing-extensions==4.14.1
     # via
+    #   alembic
     #   anyio
     #   pydantic
     #   pydantic-core

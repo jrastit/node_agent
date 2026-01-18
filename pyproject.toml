@@ -21,7 +21,7 @@ dependencies = [
     "grpcio",
     "ansible",
     "ansible-base",
-    "supabase"
+    "supabase",
 ]
 [project.optional-dependencies]
 test = [
@@ -32,5 +32,6 @@ test = [
     "pytest",
     "pytest-cov",
     "pytest-flask",
-    "pytest-mock"
+    "pytest-mock",
+    "alembic",
 ]
