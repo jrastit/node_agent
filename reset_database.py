@@ -27,7 +27,7 @@ with app.app_context():
                 # for column in inspector.get_columns(table_name, schema=schema):
                 #    print("Column: %s" % column)
                 db.session.execute(
-                    text("DROP TABLE IF EXISTS %s CASCADE" % table_name)
+                    text("DROP TABLE IF EXISTS \"%s\" CASCADE" % table_name)
                 )
         else:
             print("Skipping schema: %s" % schema)

@@ -10,6 +10,8 @@ from node_agent.model.db import (
     column_relationship_list,
     column_time_created,
     column_time_updated,
+    column_foreign_key,
+    column_relationship,
 )
 from node_agent.model.entrypoint import Entrypoint
 
@@ -29,7 +31,10 @@ class Server(Base):
     cloud_name: Mapped[str] = column_string_null()
     ip: Mapped[str] = column_string_null()
 
-    entrypoint = column_relationship_list(
+    entrypoint: Mapped[list[Entrypoint]] = column_relationship_list(
         Entrypoint,
         back_populates="server",
     )
+
+    organisation_id: Mapped[int] = column_foreign_key("organisation.id")
+    organisation: Mapped["Organisation"] = column_relationship()
