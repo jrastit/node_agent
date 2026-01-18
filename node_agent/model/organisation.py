@@ -22,5 +22,5 @@ class Organisation(Base):
     name: Mapped[str] = column_name()
     parent_id: Mapped[int] = column_foreign_key("organisation.id", primary_key=False)
     parent: Mapped["Organisation"] = column_relationship(foreign_keys="Organisation.parent_id")
-    groups: Mapped[list["Group"]] = column_relationship_list("Group", back_populates="organisation")
+    groups: Mapped[list["Group"]] = column_relationship_list("Group", back_populates="organisation") # type: ignore
 

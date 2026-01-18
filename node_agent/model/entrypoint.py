@@ -28,7 +28,7 @@ class Entrypoint(Base, JsonSchemaMixin):
     ssh_id: Mapped[str] = column_string_null()
 
     server_id: Mapped[int] = column_foreign_key("server.id")
-    server: Mapped["Server"] = column_relationship()
+    server: Mapped["Server"] = column_relationship() # type: ignore
 
     node = column_relationship_list(
         OasisNode,

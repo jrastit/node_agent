@@ -37,4 +37,4 @@ class Server(Base):
     )
 
     organisation_id: Mapped[int] = column_foreign_key("organisation.id")
-    organisation: Mapped["Organisation"] = column_relationship()
+    organisation: Mapped["Organisation"] = column_relationship() # type: ignore

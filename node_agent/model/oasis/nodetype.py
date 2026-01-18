@@ -39,7 +39,7 @@ class OasisNodetype(Base):
     node_ssh_id: Mapped[str] = column_string_null()
 
     network_id: Mapped[int] = column_foreign_key("oasis_network.id")
-    network: Mapped["OasisNetwork"] = column_relationship()
+    network: Mapped["OasisNetwork"] = column_relationship() # type: ignore
 
     # node: Mapped[list["OasisNode"]] = column_relationship_many_to_many(
     #     "OasisNode",

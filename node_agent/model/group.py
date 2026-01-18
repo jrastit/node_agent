@@ -27,14 +27,14 @@ user_group_association = Table(
 class Group(Base):
     __tablename__ = "group"
     id: Mapped[intpk] = column_id()
-    users: Mapped[list["User"]] = relationship(
+    users: Mapped[list["User"]] = relationship( # type: ignore
         "User",
         secondary=user_group_association,
         back_populates="groups",
-    )
+    ) 
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
     name: Mapped[str] = column_name()
     organisation_id: Mapped[int] = column_foreign_key("organisation.id")
-    organisation: Mapped["Organisation"] = column_relationship()
+    organisation: Mapped["Organisation"] = column_relationship() # type: ignore
     

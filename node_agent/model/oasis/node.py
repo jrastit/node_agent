@@ -54,17 +54,17 @@ class OasisNode(Base):
     node_id: Mapped[str] = column_string_null()
 
     entity_id: Mapped[int] = column_foreign_key("oasis_entity.id")
-    entity: Mapped["OasisEntity"] = column_relationship()
+    entity: Mapped["OasisEntity"] = column_relationship() # type: ignore
     entrypoint_id: Mapped[int] = column_foreign_key("entrypoint.id")
-    entrypoint: Mapped["Entrypoint"] = column_relationship(
+    entrypoint: Mapped["Entrypoint"] = column_relationship( # type: ignore
         foreign_keys="OasisNode.entrypoint_id"
     )
     entrypoint_admin_id: Mapped[int] = column_foreign_key("entrypoint.id")
-    entrypoint_admin: Mapped["Entrypoint"] = column_relationship(
+    entrypoint_admin: Mapped["Entrypoint"] = column_relationship( # type: ignore
         foreign_keys="OasisNode.entrypoint_admin_id"
     )
 
-    nodetype: Mapped[list["OasisNodetype"]] = column_relationship_many_to_many(
+    nodetype: Mapped[list["OasisNodetype"]] = column_relationship_many_to_many( # type: ignore
         "OasisNodetype",
         secondary=node_nodetype,
         # back_populates="node",
