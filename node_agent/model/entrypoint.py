@@ -9,7 +9,6 @@ from node_agent.model.db import (
     column_id,
     column_string_null,
     column_foreign_key,
-    column_relationship_list,
     column_relationship,
     column_time_created,
     column_time_updated,

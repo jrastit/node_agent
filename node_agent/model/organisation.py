@@ -10,7 +10,6 @@ from node_agent.model.db import (
     column_time_updated,
     column_foreign_key,
     column_relationship,
-    column_relationship_list,
 )
 
 
@@ -27,4 +26,3 @@ class Organisation(Base):
     parent: Mapped["Organisation"] = column_relationship(
         foreign_keys="Organisation.parent_id"
     )
-    groups: Mapped[list["Group"]] = column_relationship_list("Group", back_populates="organisation")  # type: ignore

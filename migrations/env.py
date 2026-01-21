@@ -1,4 +1,10 @@
 from logging.config import fileConfig
+from alembic_utils.replaceable_entity import register_entities
+from alembic_utils.pg_function import PGFunction
+from node_agent.model.function.psql_user_management import (
+    current_user_id,
+    is_org_member,
+)
 
 import pkgutil
 import importlib
@@ -26,7 +32,7 @@ if config.config_file_name is not None:
 # Adapte ces imports selon ton projet Flask:
 # - si tu as Flask-SQLAlchemy: target_metadata = db.metadata
 # - sinon: target_metadata = Base.metadata
-  # ou from yourapp.models import Base
+# ou from yourapp.models import Base
 
 from node_agent.myapp import init_app
 
@@ -35,12 +41,14 @@ app.app_context().push()
 
 from node_agent.model.db import Base
 
+
 def import_all_models():
     package = model_pkg
     for _, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
         if is_pkg:
             continue
         importlib.import_module(f"{package.__name__}.{module_name}")
+
 
 import_all_models()
 
@@ -105,7 +113,16 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+        )
+        register_entities(
+            [
+                current_user_id,
+                is_org_member,
+            ],
+            "public",
+            entity_types=[PGFunction],
         )
 
         with context.begin_transaction():

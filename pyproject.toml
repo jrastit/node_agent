@@ -34,4 +34,5 @@ test = [
     "pytest-flask",
     "pytest-mock",
     "alembic",
+    "alembic-utils",
 ]

@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 11e14d276834
+Revision ID: 20260121_01_rls
 Revises: 
-Create Date: 2026-01-18 15:54:48.217683
+Create Date: 2026-01-21 19:19:22.040472
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '11e14d276834'
+revision: str = '20260121_01_rls'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -40,8 +40,7 @@ def upgrade() -> None:
     sa.Column('time_updated', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('entity_id', sa.String(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('oasis_network',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -51,30 +50,32 @@ def upgrade() -> None:
     sa.Column('core_version', sa.String(), nullable=True),
     sa.Column('genesis_url', sa.String(), nullable=True),
     sa.Column('seed_node', sa.String(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('server',
+    op.create_table('organisation',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('time_create', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('time_updated', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('cloud', sa.String(), nullable=True),
-    sa.Column('cloud_name', sa.String(), nullable=True),
-    sa.Column('ip', sa.String(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.Column('parent_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['parent_id'], ['organisation.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('entrypoint',
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('auth_user_id', sa.UUID(), nullable=True),
+    sa.Column('time_create', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('time_updated', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('auth_user_id')
+    )
+    op.create_table('group',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('time_create', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('time_updated', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('user', sa.String(), nullable=True),
-    sa.Column('path', sa.String(), nullable=True),
-    sa.Column('ssh_id', sa.String(), nullable=True),
-    sa.Column('server_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['server_id'], ['server.id'], ),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('organisation_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('oasis_nodetype',
@@ -93,8 +94,7 @@ def upgrade() -> None:
     sa.Column('node_ssh_id', sa.String(), nullable=True),
     sa.Column('network_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['network_id'], ['oasis_network.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('oasis_paratime_config',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -109,8 +109,38 @@ def upgrade() -> None:
     sa.Column('IAS_proxy', sa.String(), nullable=True),
     sa.Column('oasis_config_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['oasis_config_id'], ['oasis_config.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('server',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('time_create', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('time_updated', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('cloud', sa.String(), nullable=True),
+    sa.Column('cloud_name', sa.String(), nullable=True),
+    sa.Column('ip', sa.String(), nullable=True),
+    sa.Column('organisation_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['organisation_id'], ['organisation.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('entrypoint',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('time_create', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('time_updated', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('user', sa.String(), nullable=True),
+    sa.Column('path', sa.String(), nullable=True),
+    sa.Column('ssh_id', sa.String(), nullable=True),
+    sa.Column('server_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['server_id'], ['server.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_group_association',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('group_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['group_id'], ['group.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'group_id')
     )
     op.create_table('oasis_node',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -130,10 +160,9 @@ def upgrade() -> None:
     sa.Column('entrypoint_id', sa.Integer(), nullable=True),
     sa.Column('entrypoint_admin_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['entity_id'], ['oasis_entity.id'], ),
-    sa.ForeignKeyConstraint(['entrypoint_admin_id'], ['entrypoint.id'], ),
-    sa.ForeignKeyConstraint(['entrypoint_id'], ['entrypoint.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.ForeignKeyConstraint(['entrypoint_admin_id'], ['entrypoint.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['entrypoint_id'], ['entrypoint.id'], ondelete='SET NULL'),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('oasis_node_nodetype',
     sa.Column('node_id', sa.Integer(), nullable=False),
@@ -150,10 +179,14 @@ def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('oasis_node_nodetype')
     op.drop_table('oasis_node')
-    op.drop_table('oasis_paratime_config')
-    op.drop_table('oasis_nodetype')
+    op.drop_table('user_group_association')
     op.drop_table('entrypoint')
     op.drop_table('server')
+    op.drop_table('oasis_paratime_config')
+    op.drop_table('oasis_nodetype')
+    op.drop_table('group')
+    op.drop_table('user')
+    op.drop_table('organisation')
     op.drop_table('oasis_network')
     op.drop_table('oasis_entity')
     op.drop_table('oasis_config')

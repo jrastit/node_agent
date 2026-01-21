@@ -2,6 +2,7 @@ import typing
 from typing import Annotated
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import UUID
 from sqlalchemy.orm import Mapped, MappedAsDataclass, relationship
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import DeclarativeBase
@@ -20,6 +21,14 @@ def column_id():
         nullable=False,
         init=None,
         insert_sentinel=False,
+    )
+
+
+def column_uuid():
+    return mapped_column(
+        UUID(as_uuid=True),
+        unique=True,
+        nullable=True,
     )
 
 
