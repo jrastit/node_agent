@@ -17,7 +17,7 @@ oasis_config = Blueprint("oasis_config", __name__)
 @require_appkey
 def api_oasis_config_put():
     ret = inset_or_update_object_from_json_raw(OasisConfig, request.json)
-    return jsonify({OasisConfig.__name__: ret})
+    return jsonify({OasisConfig.__name__: ret.to_dict() if ret else None})
 
 
 @oasis_config.route("/api/oasis/config/<config_id>/paratime", methods=["PUT"])
@@ -26,7 +26,9 @@ def api_oasis_paratime_config_put(config_id):
     ret = inset_or_update_object_from_json_raw(
         OasisParatimeConfig, request.json
     )
-    return jsonify({OasisParatimeConfig.__name__: ret})
+    return jsonify(
+        {OasisParatimeConfig.__name__: ret.to_dict() if ret else None}
+    )
 
 
 @oasis_config.route("/api/oasis/config", methods=["GET"])
@@ -42,7 +44,13 @@ def api_oasis_config_validate(config_id):
     oasis_config = OasisConfig.query.get(config_id)
     oasis_config.validate = validate
     oasis_config.save()
-    return jsonify({OasisConfig.__name__: oasis_config})
+    return jsonify(
+        {
+            OasisConfig.__name__: (
+                oasis_config.to_dict() if oasis_config else None
+            )
+        }
+    )
 
 
 @oasis_config.route("/api/oasis/config/<config_id>", methods=["DELETE"])

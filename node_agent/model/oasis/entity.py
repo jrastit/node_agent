@@ -15,6 +15,7 @@ from node_agent.model.oasis.node import OasisNode
 
 
 class OasisEntity(Base):
+
     __tablename__ = "oasis_entity"
     id: Mapped[intpk] = column_id()
     time_create: Mapped[datetime] = column_time_created()
@@ -25,3 +26,16 @@ class OasisEntity(Base):
     entity_id: Mapped[str] = column_string_null()
 
     node = column_relationship_list(OasisNode, back_populates="entity")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "entity_id": self.entity_id,
+            "time_create": (
+                self.time_create.isoformat() if self.time_create else None
+            ),
+            "time_updated": (
+                self.time_updated.isoformat() if self.time_updated else None
+            ),
+        }

@@ -28,7 +28,7 @@ oasis_api = Blueprint("oasis_api", __name__)
 def api_oasis_node_put():
     ret = inset_or_update_object_from_json_raw(OasisNode, request.json)
     oasis_node_data_update_nodetype(ret, request.json)
-    return jsonify({OasisNode.__name__: ret})
+    return jsonify({OasisNode.__name__: ret.to_dict() if ret else None})
 
 
 @oasis_api.route("/api/oasis/nodetype", methods=["PUT"])

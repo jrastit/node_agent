@@ -17,6 +17,7 @@ from node_agent.model.oasis.node import OasisNode
 
 
 class Entrypoint(Base, JsonSchemaMixin):
+
     __tablename__ = "entrypoint"
     id: Mapped[intpk] = column_id()
     time_create: Mapped[datetime] = column_time_created()
@@ -28,7 +29,7 @@ class Entrypoint(Base, JsonSchemaMixin):
     ssh_id: Mapped[str] = column_string_null()
 
     server_id: Mapped[int] = column_foreign_key("server.id")
-    server: Mapped["Server"] = column_relationship() # type: ignore
+    server: Mapped["Server"] = column_relationship()  # type: ignore
 
     node = column_relationship_list(
         OasisNode,
@@ -40,3 +41,20 @@ class Entrypoint(Base, JsonSchemaMixin):
         back_populates="entrypoint_admin",
         foreign_keys="OasisNode.entrypoint_admin_id",
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "user": self.user,
+            "path": self.path,
+            "ssh_id": self.ssh_id,
+            "server_id": self.server_id,
+            "server": (self.server.to_dict() if self.server else None),
+            "time_create": (
+                self.time_create.isoformat() if self.time_create else None
+            ),
+            "time_updated": (
+                self.time_updated.isoformat() if self.time_updated else None
+            ),
+        }

@@ -14,13 +14,15 @@ def inset_or_update_object_from_json_raw(mapper, data):
 
 
 def inset_or_update_object_from_json(mapper, data):
-    return jsonify(
-        {mapper.__name__: inset_or_update_object_from_json_raw(mapper, data)}
-    )
+    obj = inset_or_update_object_from_json_raw(mapper, data)
+    return jsonify({mapper.__name__: obj.to_dict() if obj else None})
 
 
 def get_object_list(mapper):
-    return jsonify({mapper.__name__: db.session.query(mapper).all()})
+    return jsonify({
+        mapper.__name__:
+            [obj.to_dict() for obj in db.session.query(mapper).all()]
+    })
 
 
 def delete_object(mapper, id):

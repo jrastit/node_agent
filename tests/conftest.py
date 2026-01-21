@@ -1,3 +1,17 @@
+import dataclasses
+import traceback
+
+_original_asdict = dataclasses.asdict
+
+
+def debug_asdict(obj, dict_factory=dict):
+    print("Appel à dataclasses.asdict ! Stack d'appel :")
+    traceback.print_stack()
+    return _original_asdict(obj, dict_factory)
+
+
+dataclasses.asdict = debug_asdict
+
 import pytest
 
 from node_agent.model.oasis.entity import OasisEntity

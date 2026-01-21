@@ -11,8 +11,8 @@ from node_agent.model.oasis.node import OasisNode
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
-        if dataclasses.is_dataclass(o):
-            return dataclasses.asdict(o)
+        if dataclasses.is_dataclass(o) and hasattr(o, "to_dict"):
+            return o.to_dict()
         if isinstance(o, datetime):
             return o.isoformat()
         if isinstance(o, date):
@@ -38,7 +38,11 @@ def export_oasis_config(json_file):
             cls=EnhancedJSONEncoder,
             indent=4,
         )
-    return jsonify(oasis_node_list)
+    # Convert all OasisNode objects to dict before jsonify
+    oasis_node_list_dict = {
+        OasisNode.__name__: [node.to_dict() for node in oasis_node_list[OasisNode.__name__]]
+    }
+    return jsonify(oasis_node_list_dict)
 
 
 def _get_version_url_list(section, i, version_list, url_list, str1, str2=None):

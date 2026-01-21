@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 from datetime import datetime
 from sqlalchemy import Table, Column, ForeignKey, Integer
@@ -23,18 +22,31 @@ user_group_association = Table(
     Column("group_id", Integer, ForeignKey("group.id"), primary_key=True),
 )
 
+
 @dataclass
 class Group(Base):
     __tablename__ = "group"
     id: Mapped[intpk] = column_id()
-    users: Mapped[list["User"]] = relationship( # type: ignore
+    users: Mapped[list["User"]] = relationship(  # type: ignore
         "User",
         secondary=user_group_association,
         back_populates="groups",
-    ) 
+    )
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
     name: Mapped[str] = column_name()
     organisation_id: Mapped[int] = column_foreign_key("organisation.id")
-    organisation: Mapped["Organisation"] = column_relationship() # type: ignore
-    
+    organisation: Mapped["Organisation"] = column_relationship()  # type: ignore
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "time_create": (
+                self.time_create.isoformat() if self.time_create else None
+            ),
+            "time_updated": (
+                self.time_updated.isoformat() if self.time_updated else None
+            ),
+            "organisation_id": self.organisation_id,
+        }

@@ -43,7 +43,7 @@ def column_time_updated():
 def column_name():
     return mapped_column(
         db.String,
-        unique=True,
+        unique=False,
         nullable=False,
         default=None,
     )

@@ -1,6 +1,6 @@
 import logging
 
-from dataclasses import asdict
+
 from node_agent.config import settings
 from node_agent.model.db import db
 from node_agent.model.oasis.node import OasisNode
@@ -18,7 +18,7 @@ def load_test_node():
     )
 
     if node_db is not None:
-        node = asdict(node_db)
+        node = node_db.to_dict()
         assert node["entrypoint"]["server"]["ip"] == settings.test_node_address
         return node
 
