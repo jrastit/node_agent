@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from dataclasses_jsonschema import JsonSchemaMixin
 from sqlalchemy.orm import Mapped
@@ -28,33 +29,7 @@ class Entrypoint(Base, JsonSchemaMixin):
     path: Mapped[str] = column_string_null()
     ssh_id: Mapped[str] = column_string_null()
 
-    server_id: Mapped[int] = column_foreign_key("server.id")
+    server_id: Mapped[int] = column_foreign_key(
+        "server.id", ondelete="CASCADE"
+    )
     server: Mapped["Server"] = column_relationship()  # type: ignore
-
-    node = column_relationship_list(
-        OasisNode,
-        back_populates="entrypoint",
-        foreign_keys="OasisNode.entrypoint_id",
-    )
-    node_admin = column_relationship_list(
-        OasisNode,
-        back_populates="entrypoint_admin",
-        foreign_keys="OasisNode.entrypoint_admin_id",
-    )
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "user": self.user,
-            "path": self.path,
-            "ssh_id": self.ssh_id,
-            "server_id": self.server_id,
-            "server": (self.server.to_dict() if self.server else None),
-            "time_create": (
-                self.time_create.isoformat() if self.time_create else None
-            ),
-            "time_updated": (
-                self.time_updated.isoformat() if self.time_updated else None
-            ),
-        }

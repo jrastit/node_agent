@@ -1,3 +1,22 @@
+# import sys
+
+# # Monkey-patch dataclasses._asdict_inner pour loguer chaque appel
+# _original_asdict_inner = sys.modules["dataclasses"]._asdict_inner
+# def debug_asdict_inner(obj, dict_factory):
+#     print(f"dataclasses._asdict_inner called on instance of: {type(obj).__name__}")
+#     return _original_asdict_inner(obj, dict_factory)
+# sys.modules["dataclasses"]._asdict_inner = debug_asdict_inner
+# import dataclasses
+
+# _original_asdict = dataclasses.asdict
+
+
+# def debug_asdict(obj, *, dict_factory=dict):
+#     print(f"dataclasses.asdict called on instance of: {type(obj).__name__}")
+#     return _original_asdict(obj, dict_factory=dict_factory)
+
+
+# dataclasses.asdict = debug_asdict
 import pytest
 
 from node_agent.model.oasis.entity import OasisEntity

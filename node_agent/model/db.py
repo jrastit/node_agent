@@ -65,14 +65,19 @@ def column_bool_null() -> Mapped[typing.Optional[str]]:
     )
 
 
-def column_foreign_key(key, primary_key=False):
+def column_foreign_key(key, primary_key=False, ondelete=None):
     if primary_key:
         nullable = False
     else:
         nullable = True
+    fk = (
+        db.ForeignKey(key, ondelete=ondelete)
+        if ondelete
+        else db.ForeignKey(key)
+    )
     return mapped_column(
         db.Integer,
-        db.ForeignKey(key),
+        fk,
         primary_key=primary_key,
         nullable=nullable,
         default=None,
@@ -92,6 +97,19 @@ def column_relationship_many_to_many(
 
 
 def column_relationship_list(mapped, back_populates=None, foreign_keys=None):
+    return relationship(
+        mapped,
+        back_populates=back_populates,
+        foreign_keys=foreign_keys,
+        default_factory=list,
+        repr=False,  # évite repr récursif
+        compare=False,  # évite eq récursif (dataclass)
+    )
+
+
+def column_relationship_list_req(
+    mapped, back_populates=None, foreign_keys=None
+):
     return relationship(
         mapped,
         back_populates=back_populates,

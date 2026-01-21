@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import logging
 
 
@@ -18,7 +19,7 @@ def load_test_node():
     )
 
     if node_db is not None:
-        node = node_db.to_dict()
+        node = asdict(node_db)
         assert node["entrypoint"]["server"]["ip"] == settings.test_node_address
         return node
 

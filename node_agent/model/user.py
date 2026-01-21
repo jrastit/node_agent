@@ -30,17 +30,3 @@ class User(Base):
     organisation: Mapped["Organisation"] = column_relationship()  # type: ignore
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email,
-            "organisation_id": self.organisation_id,
-            "time_create": (
-                self.time_create.isoformat() if self.time_create else None
-            ),
-            "time_updated": (
-                self.time_updated.isoformat() if self.time_updated else None
-            ),
-        }

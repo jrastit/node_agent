@@ -37,16 +37,3 @@ class Group(Base):
     name: Mapped[str] = column_name()
     organisation_id: Mapped[int] = column_foreign_key("organisation.id")
     organisation: Mapped["Organisation"] = column_relationship()  # type: ignore
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "time_create": (
-                self.time_create.isoformat() if self.time_create else None
-            ),
-            "time_updated": (
-                self.time_updated.isoformat() if self.time_updated else None
-            ),
-            "organisation_id": self.organisation_id,
-        }

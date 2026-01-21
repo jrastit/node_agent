@@ -31,18 +31,3 @@ class OasisNetwork(Base):
         OasisNodetype,
         back_populates="network",
     )
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "core_version": self.core_version,
-            "genesis_url": self.genesis_url,
-            "seed_node": self.seed_node,
-            "time_create": (
-                self.time_create.isoformat() if self.time_create else None
-            ),
-            "time_updated": (
-                self.time_updated.isoformat() if self.time_updated else None
-            ),
-        }
