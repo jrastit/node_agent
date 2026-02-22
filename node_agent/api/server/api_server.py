@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends
 from node_agent.api.api_key import require_appkey
 from node_agent.model.entrypoint import Entrypoint
 from node_agent.model.server import Server
+from node_agent.schema.api_schema import (
+    EntrypointUpsertSchema,
+    ServerUpsertSchema,
+)
 from node_agent.utils.db_util import (
     inset_or_update_object_from_json,
     delete_object,
@@ -14,7 +18,7 @@ server_api = APIRouter()
 
 
 @server_api.put("/api/server", dependencies=[Depends(require_appkey)])
-def api_server_put(payload: dict):
+def api_server_put(payload: ServerUpsertSchema):
     """Create or update a Server object
     ---
     put:
@@ -26,14 +30,20 @@ def api_server_put(payload: dict):
                         schema: Server
 
     """
-    return inset_or_update_object_from_json(Server, payload)
+    return inset_or_update_object_from_json(
+        Server,
+        payload.model_dump(exclude_none=True),
+    )
 
 
 @server_api.put(
     "/api/server/entrypoint", dependencies=[Depends(require_appkey)]
 )
-def api_entrypoint_put(payload: dict):
-    return inset_or_update_object_from_json(Entrypoint, payload)
+def api_entrypoint_put(payload: EntrypointUpsertSchema):
+    return inset_or_update_object_from_json(
+        Entrypoint,
+        payload.model_dump(exclude_none=True),
+    )
 
 
 @server_api.get("/api/server", dependencies=[Depends(require_appkey)])

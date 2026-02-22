@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def test_api_server_post_error(fastapi_app):
-    ret = api_put_data("/api/server", 500, {"error": False})
-    assert ret is None
+    ret = api_put_data("/api/server", 422, {"error": False})
+    assert ret is not None
+    assert "detail" in ret
 
 
 def test_api_server(fastapi_app):

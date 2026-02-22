@@ -69,22 +69,22 @@ def test_db(fastapi_app):
         .first()
     )
     assert db_node is not None
-    assert db_node.entrypoint is None
-    # assert db_node.entrypoint.server is None
-    # assert db_node.entrypoint_admin.server is None
+    assert db_node.entrypoint is not None
+    assert db_node.entrypoint.server is not None
+    assert db_node.entrypoint_admin.server is not None
 
-    # make_transient(server)
-    # db.session.add(server)
-    # node.entrypoint.server = server
-    # node.entrypoint_admin.server = server
-    # db.session.commit()
+    make_transient(server)
+    db.session.add(server)
+    node.entrypoint.server = server
+    node.entrypoint_admin.server = server
+    db.session.commit()
 
-    # db_node = (
-    #     db.session.query(OasisNode)
-    #     .filter(OasisNode.name == "test_node")
-    #     .first()
-    # )
-    # assert db_node is not None
-    # assert db_node.entrypoint is not None
-    # assert db_node.entrypoint.server is not None
-    # assert db_node.entrypoint_admin.server is not None
+    db_node = (
+        db.session.query(OasisNode)
+        .filter(OasisNode.name == "test_node")
+        .first()
+    )
+    assert db_node is not None
+    assert db_node.entrypoint is not None
+    assert db_node.entrypoint.server is not None
+    assert db_node.entrypoint_admin.server is not None

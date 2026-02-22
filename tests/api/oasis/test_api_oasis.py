@@ -5,14 +5,18 @@ from tests.utils.test_node import load_test_node
 
 
 def test_api_oasis_node_post_error(fastapi_app):
-    ret = api_put_data("/api/oasis/node", 500, {"error": False})
-    assert ret is None
-    ret = api_put_data("/api/oasis/nodetype", 500, {"error": False})
-    assert ret is None
-    ret = api_put_data("/api/oasis/network", 500, {"error": False})
-    assert ret is None
-    ret = api_put_data("/api/oasis/entity", 500, {"error": False})
-    assert ret is None
+    ret = api_put_data("/api/oasis/node", 422, {"error": False})
+    assert ret is not None
+    assert "detail" in ret
+    ret = api_put_data("/api/oasis/nodetype", 422, {"error": False})
+    assert ret is not None
+    assert "detail" in ret
+    ret = api_put_data("/api/oasis/network", 422, {"error": False})
+    assert ret is not None
+    assert "detail" in ret
+    ret = api_put_data("/api/oasis/entity", 422, {"error": False})
+    assert ret is not None
+    assert "detail" in ret
 
 
 def test_api_oasis_node(fastapi_app):

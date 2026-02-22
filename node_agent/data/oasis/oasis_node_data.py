@@ -23,6 +23,7 @@ def oasis_node_data_update_nodetype(node, data):
             )
         )
     db.session.commit()
+    db.session.expire(node, ["nodetype"])
 
 
 def oasis_node_set_node_id(node, node_id):
