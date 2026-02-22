@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from node_agent.api.api_key import require_appkey
 from node_agent.model.organisation import Organisation
+from node_agent.schema.api_schema import OrganisationUpsertSchema
 from node_agent.utils.db_util import (
     inset_or_update_object_from_json,
     delete_object,
@@ -13,9 +14,12 @@ organisation_api = APIRouter()
 @organisation_api.put(
     "/api/organisation", dependencies=[Depends(require_appkey)]
 )
-def api_organisation_put(payload: dict):
+def api_organisation_put(payload: OrganisationUpsertSchema):
     """Create or update an Organisation object"""
-    return inset_or_update_object_from_json(Organisation, payload)
+    return inset_or_update_object_from_json(
+        Organisation,
+        payload.model_dump(exclude_none=True),
+    )
 
 
 @organisation_api.get(

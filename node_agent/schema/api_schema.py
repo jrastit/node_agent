@@ -54,6 +54,14 @@ class OasisEntityUpsertSchema(BaseModel):
     name: str
 
 
+class OrganisationUpsertSchema(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: int | None = None
+    name: str
+    parent_id: int | None = None
+
+
 api_schemas = {
     "server_put": ServerUpsertSchema,
     "entrypoint_put": EntrypointUpsertSchema,
@@ -61,4 +69,5 @@ api_schemas = {
     "oasis_nodetype_put": OasisNodetypeUpsertSchema,
     "oasis_network_put": OasisNetworkUpsertSchema,
     "oasis_entity_put": OasisEntityUpsertSchema,
+    "organisation_put": OrganisationUpsertSchema,
 }
