@@ -27,7 +27,42 @@ with app.app_context():
                 # for column in inspector.get_columns(table_name, schema=schema):
                 #    print("Column: %s" % column)
                 db.session.execute(
-                    text("DROP TABLE IF EXISTS \"%s\" CASCADE" % table_name)
+                    text('DROP TABLE IF EXISTS "%s" CASCADE' % table_name)
+                )
+            # Drop all functions in the schema
+            functions = db.session.execute(
+                text(
+                    """
+                    SELECT routine_name, routine_type
+                    FROM information_schema.routines
+                    WHERE specific_schema = :schema
+                """
+                ),
+                {"schema": schema},
+            ).fetchall()
+            for func in functions:
+                db.session.execute(
+                    text(
+                        f'DROP FUNCTION IF EXISTS "{func.routine_name}" CASCADE'
+                    )
+                )
+
+            # Drop all policies in the schema
+            policies = db.session.execute(
+                text(
+                    """
+                    SELECT policyname, tablename
+                    FROM pg_policies
+                    WHERE schemaname = :schema
+                """
+                ),
+                {"schema": schema},
+            ).fetchall()
+            for policy in policies:
+                db.session.execute(
+                    text(
+                        f'DROP POLICY IF EXISTS "{policy.polname}" ON "{policy.tablename}" CASCADE'
+                    )
                 )
         else:
             print("Skipping schema: %s" % schema)

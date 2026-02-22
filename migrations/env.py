@@ -1,9 +1,11 @@
 from logging.config import fileConfig
 from alembic_utils.replaceable_entity import register_entities
 from alembic_utils.pg_function import PGFunction
+from alembic_utils.pg_policy import PGPolicy
 from node_agent.model.function.psql_user_management import (
     current_user_id,
     is_org_member,
+    server_select_org_member,
 )
 
 import pkgutil
@@ -120,9 +122,10 @@ def run_migrations_online() -> None:
             [
                 current_user_id,
                 is_org_member,
+                server_select_org_member,
             ],
             "public",
-            entity_types=[PGFunction],
+            entity_types=[PGFunction, PGPolicy],
         )
 
         with context.begin_transaction():
