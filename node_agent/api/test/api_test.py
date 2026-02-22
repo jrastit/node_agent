@@ -1,16 +1,13 @@
 #!/usr/bin/3
-from flask import jsonify, Blueprint
+from fastapi import APIRouter, Depends
+from fastapi.responses import PlainTextResponse
 
 
 from node_agent.api.api_key import require_appkey
 
-test_api = Blueprint('test_api', __name__)
+test_api = APIRouter()
 
 
-@test_api.route(
-    "/api/test/ping",
-    methods=['GET']
-)
-@require_appkey
+@test_api.get("/api/test/ping", dependencies=[Depends(require_appkey)])
 def api_test_ping():
-    return "Pong"
+    return PlainTextResponse("Pong")

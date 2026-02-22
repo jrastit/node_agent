@@ -9,7 +9,7 @@ from node_agent.service.oasis.node_info import (
 logger = logging.getLogger()
 
 
-def test_oasis_node_info_status(app):
+def test_oasis_node_info_status(fastapi_app):
     node = load_test_node()
     assert "id" in node
     # status = oasis_node_info_status(node)

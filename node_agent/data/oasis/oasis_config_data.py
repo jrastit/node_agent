@@ -50,7 +50,7 @@ def add_config_data(data, force=False):
     md5 = hashlib.md5(data.encode()).hexdigest()
     oasis_config_db = db.session.query(OasisConfig).filter_by(md5=md5).first()
     if oasis_config_db is not None and not force:
-        oasis_config_db.save()
+        db.session.commit()
         return oasis_config_db
     config = get_configue_from_md(data)
     oasis_config_db = OasisConfig(

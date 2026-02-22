@@ -27,7 +27,7 @@ from node_agent.utils.thread import get_nb_thread, set_thread_available
 
 
 @pytest.fixture
-def app():
+def fastapi_app():
     app = init_app()
     OasisEntity
     OasisNodetype

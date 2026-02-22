@@ -6,7 +6,7 @@ from node_agent.service.server.server_install import server_install_package
 logger = logging.getLogger()
 
 
-def test_server_info_status(app):
+def test_server_info_status(fastapi_app):
     node = load_test_node()
     assert "id" in node
     server_install_package("curl", node["entrypoint_admin"])

@@ -1,5 +1,5 @@
 from threading import Thread
-from node_agent.global_var import get_app
+from node_agent.model.db import db
 
 nb_thread = 0
 
@@ -11,13 +11,14 @@ def _with_thread(function, *args):
     # print('start thread')
     nb_thread = nb_thread + 1
     try:
-        with get_app().app_context():
-            function(*args)
+        function(*args)
     except Exception as thread_exception:  # pragma no cover
         print(thread_exception)
         nb_thread = nb_thread - 1
-        print('thread exception')
+        print("thread exception")
         raise
+    finally:
+        db.remove_session()
     nb_thread = nb_thread - 1
     # print('stop thread')
 
@@ -25,8 +26,14 @@ def _with_thread(function, *args):
 def with_thread(function, *args):
     global thread_available
     if not thread_available:
-        raise Exception('Thread are not available')
-    Thread(target=_with_thread, args=(function, *args,)).start()
+        raise Exception("Thread are not available")
+    Thread(
+        target=_with_thread,
+        args=(
+            function,
+            *args,
+        ),
+    ).start()
 
 
 def get_nb_thread():

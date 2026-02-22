@@ -10,8 +10,6 @@ alembic==1.18.1
     #   node-agent (pyproject.toml)
 alembic-utils==0.8.8
     # via node-agent (pyproject.toml)
-aniso8601==10.0.1
-    # via flask-restful
 annotated-types==0.7.0
     # via pydantic
 ansible==11.8.0
@@ -30,16 +28,12 @@ attrs==25.3.0
     # via
     #   jsonschema
     #   referencing
-blinker==1.6.2
-    # via flask
 certifi==2025.10.5
     # via
     #   httpcore
     #   httpx
 cffi==1.17.1
     # via cryptography
-click==8.1.4
-    # via flask
 coverage[toml]==7.2.7
     # via pytest-cov
 cryptography==45.0.5
@@ -60,22 +54,6 @@ dill==0.3.6
 dynaconf==3.2.11
     # via node-agent (pyproject.toml)
 flake8==6.0.0
-    # via node-agent (pyproject.toml)
-flask==2.3.2
-    # via
-    #   flask-cors
-    #   flask-restful
-    #   flask-sqlalchemy
-    #   flask-swagger-ui
-    #   node-agent (pyproject.toml)
-    #   pytest-flask
-flask-cors==6.0.1
-    # via node-agent (pyproject.toml)
-flask-restful==0.3.10
-    # via node-agent (pyproject.toml)
-flask-sqlalchemy==3.1.1
-    # via node-agent (pyproject.toml)
-flask-swagger-ui==5.21.0
     # via node-agent (pyproject.toml)
 flupy==1.2.3
     # via alembic-utils
@@ -111,13 +89,10 @@ iniconfig==2.0.0
     # via pytest
 isort==5.12.0
     # via pylint
-itsdangerous==2.1.2
-    # via flask
 jinja2==3.1.2
     # via
     #   ansible-base
     #   ansible-core
-    #   flask
 jsonschema==4.25.0
     # via dataclasses-jsonschema
 jsonschema-specifications==2025.4.1
@@ -183,18 +158,13 @@ pytest==7.4.0
     # via
     #   node-agent (pyproject.toml)
     #   pytest-cov
-    #   pytest-flask
     #   pytest-mock
 pytest-cov==4.1.0
-    # via node-agent (pyproject.toml)
-pytest-flask==1.2.0
     # via node-agent (pyproject.toml)
 pytest-mock==3.11.1
     # via node-agent (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via dataclasses-jsonschema
-pytz==2025.2
-    # via flask-restful
 pyyaml==6.0.2
     # via
     #   ansible-base
@@ -212,16 +182,13 @@ rpds-py==0.26.0
     #   jsonschema
     #   referencing
 six==1.17.0
-    # via
-    #   flask-restful
-    #   python-dateutil
+    # via python-dateutil
 sniffio==1.3.1
     # via anyio
 sqlalchemy==2.0.42
     # via
     #   alembic
     #   alembic-utils
-    #   flask-sqlalchemy
     #   node-agent (pyproject.toml)
 storage3==2.24.0
     # via supabase
@@ -251,11 +218,6 @@ typing-inspection==0.4.2
     # via pydantic
 websockets==15.0.1
     # via realtime
-werkzeug==2.3.6
-    # via
-    #   flask
-    #   flask-cors
-    #   pytest-flask
 wrapt==1.15.0
     # via astroid
 yarl==1.22.0

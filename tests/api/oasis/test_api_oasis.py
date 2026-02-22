@@ -4,7 +4,7 @@ from tests.utils.api_util import (
 from tests.utils.test_node import load_test_node
 
 
-def test_api_oasis_node_post_error(app):
+def test_api_oasis_node_post_error(fastapi_app):
     ret = api_put_data("/api/oasis/node", 500, {"error": False})
     assert ret is None
     ret = api_put_data("/api/oasis/nodetype", 500, {"error": False})
@@ -15,7 +15,7 @@ def test_api_oasis_node_post_error(app):
     assert ret is None
 
 
-def test_api_oasis_node(app):
+def test_api_oasis_node(fastapi_app):
     entity_handler = api_put_data(
         "/api/oasis/entity",
         200,
@@ -138,6 +138,6 @@ def test_api_oasis_node(app):
     assert len(node["nodetype"]) == 1
 
 
-def test_api_oasis_node_save(app):
+def test_api_oasis_node_save(fastapi_app):
     load_test_node()
     api_put_data("/api/oasis/config/save", 200, {})

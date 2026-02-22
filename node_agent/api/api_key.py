@@ -1,24 +1,28 @@
-from os import getenv
+from typing import Annotated
 
-from functools import wraps
+from fastapi import Header, HTTPException
 
-from flask import request, abort
 from node_agent.config import settings
 
 
-# The actual decorator function
-def require_appkey(view_function):
-    @wraps(view_function)
-    # the new, post-decoration function. Note *args and **kwargs here.
-    def decorated_function(*args, **kwargs):
-        if request.headers.get('Grpc-Metadata-Authorization'):
-            header = request.headers.get('Grpc-Metadata-Authorization')
-            if header == 'Bearer ' + settings.NODE_AGENT_API_TOKEN:
-                return view_function(*args, **kwargs)
-            else:
-                print('Error : invalid token')
-                abort(401)
-        else:
-            print('Error : no token set')
-            abort(401)
-    return decorated_function
+def _get_api_token() -> str | None:
+    token = settings.get("NODE_AGENT_API_TOKEN")
+    if token is None:
+        token = settings.get("node_agent_api_token")
+    if token is None:
+        token = "test"
+    return token
+
+
+def require_appkey(
+    grpc_metadata_authorization: Annotated[
+        str | None, Header(alias="Grpc-Metadata-Authorization")
+    ] = None,
+):
+    token = _get_api_token()
+    if grpc_metadata_authorization is None:
+        print("Error : no token set")
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if grpc_metadata_authorization != f"Bearer {token}":
+        print("Error : invalid token")
+        raise HTTPException(status_code=401, detail="Unauthorized")

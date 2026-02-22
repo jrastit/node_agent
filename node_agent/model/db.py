@@ -1,14 +1,50 @@
 import typing
 from typing import Annotated
 
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import UUID
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    create_engine,
+)
+from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, MappedAsDataclass, relationship
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 
-db = SQLAlchemy()
+class Database:
+    Integer = Integer
+    DateTime = DateTime
+    String = String
+    Boolean = Boolean
+    ForeignKey = ForeignKey
+    func = func
+
+    def __init__(self):
+        self.engine = None
+        self.session = scoped_session(
+            sessionmaker(
+                autocommit=False, autoflush=False, expire_on_commit=False
+            )
+        )
+
+    def init(self, database_uri: str, engine_options: dict | None = None):
+        if self.engine is not None:
+            return
+        options = engine_options or {}
+        self.engine = create_engine(database_uri, **options)
+        self.session.configure(bind=self.engine)
+
+    def remove_session(self):
+        self.session.remove()
+
+
+db = Database()
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 

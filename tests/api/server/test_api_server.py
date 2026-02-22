@@ -9,12 +9,12 @@ from tests.utils.api_util import (
 logger = logging.getLogger(__name__)
 
 
-def test_api_server_post_error(app):
+def test_api_server_post_error(fastapi_app):
     ret = api_put_data("/api/server", 500, {"error": False})
     assert ret is None
 
 
-def test_api_server(app):
+def test_api_server(fastapi_app):
     server_handler = api_put_data(
         "/api/server",
         200,
@@ -73,7 +73,7 @@ def test_api_server(app):
     assert found is False
 
 
-def test_api_server_endpoint(app):
+def test_api_server_endpoint(fastapi_app):
     server_handler = api_put_data(
         "/api/server",
         200,

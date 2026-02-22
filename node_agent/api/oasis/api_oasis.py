@@ -1,5 +1,5 @@
 #!/usr/bin/3
-from flask import jsonify, request, Blueprint
+from fastapi import APIRouter, Depends
 
 from node_agent.api.api_key import require_appkey
 from node_agent.data.oasis.oasis_node_data import (
@@ -18,87 +18,86 @@ from node_agent.utils.db_util import (
     delete_object,
     get_object_list,
     inset_or_update_object_from_json_raw,
+    _serialize_model,
 )
 
-oasis_api = Blueprint("oasis_api", __name__)
+oasis_api = APIRouter()
 
 
-@oasis_api.route("/api/oasis/node", methods=["PUT"])
-@require_appkey
-def api_oasis_node_put():
-    ret = inset_or_update_object_from_json_raw(OasisNode, request.json)
-    oasis_node_data_update_nodetype(ret, request.json)
-    return jsonify({OasisNode.__name__: ret})
+@oasis_api.put("/api/oasis/node", dependencies=[Depends(require_appkey)])
+def api_oasis_node_put(payload: dict):
+    ret = inset_or_update_object_from_json_raw(OasisNode, payload)
+    oasis_node_data_update_nodetype(ret, payload)
+    return {OasisNode.__name__: _serialize_model(ret)}
 
 
-@oasis_api.route("/api/oasis/nodetype", methods=["PUT"])
-@require_appkey
-def api_oasis_nodetype_put():
-    return inset_or_update_object_from_json(OasisNodetype, request.json)
+@oasis_api.put("/api/oasis/nodetype", dependencies=[Depends(require_appkey)])
+def api_oasis_nodetype_put(payload: dict):
+    return inset_or_update_object_from_json(OasisNodetype, payload)
 
 
-@oasis_api.route("/api/oasis/network", methods=["PUT"])
-@require_appkey
-def api_oasis_network_put():
-    return inset_or_update_object_from_json(OasisNetwork, request.json)
+@oasis_api.put("/api/oasis/network", dependencies=[Depends(require_appkey)])
+def api_oasis_network_put(payload: dict):
+    return inset_or_update_object_from_json(OasisNetwork, payload)
 
 
-@oasis_api.route("/api/oasis/entity", methods=["PUT"])
-@require_appkey
-def api_oasis_entity_put():
-    return inset_or_update_object_from_json(OasisEntity, request.json)
+@oasis_api.put("/api/oasis/entity", dependencies=[Depends(require_appkey)])
+def api_oasis_entity_put(payload: dict):
+    return inset_or_update_object_from_json(OasisEntity, payload)
 
 
-@oasis_api.route("/api/oasis/node", methods=["GET"])
-@require_appkey
+@oasis_api.get("/api/oasis/node", dependencies=[Depends(require_appkey)])
 def api_oasis_node_get():
     return get_object_list(OasisNode)
 
 
-@oasis_api.route("/api/oasis/nodetype", methods=["GET"])
-@require_appkey
+@oasis_api.get("/api/oasis/nodetype", dependencies=[Depends(require_appkey)])
 def api_nodetype_get():
     return get_object_list(OasisNodetype)
 
 
-@oasis_api.route("/api/oasis/network", methods=["GET"])
-@require_appkey
+@oasis_api.get("/api/oasis/network", dependencies=[Depends(require_appkey)])
 def api_network_get():
     return get_object_list(OasisNetwork)
 
 
-@oasis_api.route("/api/oasis/entity", methods=["GET"])
-@require_appkey
+@oasis_api.get("/api/oasis/entity", dependencies=[Depends(require_appkey)])
 def api_oasis_entity_get():
     return get_object_list(OasisEntity)
 
 
-@oasis_api.route("/api/oasis/node/<node_id>", methods=["DELETE"])
-@require_appkey
-def api_oasis_node_delete(node_id):
+@oasis_api.delete(
+    "/api/oasis/node/{node_id}", dependencies=[Depends(require_appkey)]
+)
+def api_oasis_node_delete(node_id: int):
     return delete_object(OasisNode, node_id)
 
 
-@oasis_api.route("/api/oasis/nodetype/<nodetype_id>", methods=["DELETE"])
-@require_appkey
-def api_nodetype_delete(nodetype_id):
+@oasis_api.delete(
+    "/api/oasis/nodetype/{nodetype_id}",
+    dependencies=[Depends(require_appkey)],
+)
+def api_nodetype_delete(nodetype_id: int):
     return delete_object(OasisNodetype, nodetype_id)
 
 
-@oasis_api.route("/api/oasis/network/<network_id>", methods=["DELETE"])
-@require_appkey
-def api_network_delete(network_id):
+@oasis_api.delete(
+    "/api/oasis/network/{network_id}", dependencies=[Depends(require_appkey)]
+)
+def api_network_delete(network_id: int):
     return delete_object(OasisNetwork, network_id)
 
 
-@oasis_api.route("/api/oasis/entity/<entity_id>", methods=["DELETE"])
-@require_appkey
-def api_entity_delete(entity_id):
+@oasis_api.delete(
+    "/api/oasis/entity/{entity_id}", dependencies=[Depends(require_appkey)]
+)
+def api_entity_delete(entity_id: int):
     return delete_object(OasisEntity, entity_id)
 
 
-@oasis_api.route("/api/oasis/config/save", methods=["PUT"])
-@require_appkey
+@oasis_api.put(
+    "/api/oasis/config/save", dependencies=[Depends(require_appkey)]
+)
 def api_oasis_config_save():
     if False:
         current_datetime = datetime.datetime.now().strftime(

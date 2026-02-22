@@ -4,9 +4,9 @@ from datetime import datetime
 import json
 import os
 
-from flask import jsonify
 from node_agent.model.db import db
 from node_agent.model.oasis.node import OasisNode
+from node_agent.utils.db_util import _serialize_model
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -21,7 +21,12 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 def export_oasis_config(json_file):
-    oasis_node_list = {OasisNode.__name__: db.session.query(OasisNode).all()}
+    oasis_node_list = {
+        OasisNode.__name__: [
+            _serialize_model(node)
+            for node in db.session.query(OasisNode).all()
+        ]
+    }
 
     # create the directories path for the JSON file
     path_parts = json_file.split("/")
@@ -38,7 +43,7 @@ def export_oasis_config(json_file):
             cls=EnhancedJSONEncoder,
             indent=4,
         )
-    return jsonify(oasis_node_list)
+    return oasis_node_list
 
 
 def _get_version_url_list(section, i, version_list, url_list, str1, str2=None):

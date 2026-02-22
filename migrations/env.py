@@ -30,16 +30,11 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# 2) Importer ta metadata SQLAlchemy
-# Adapte ces imports selon ton projet Flask:
-# - si tu as Flask-SQLAlchemy: target_metadata = db.metadata
-# - sinon: target_metadata = Base.metadata
-# ou from yourapp.models import Base
+# 2) Importer metadata SQLAlchemy
 
 from node_agent.myapp import init_app
 
 app = init_app()
-app.app_context().push()
 
 from node_agent.model.db import Base
 

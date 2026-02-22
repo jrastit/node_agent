@@ -9,9 +9,8 @@ from node_agent.model.oasis.nodetype import OasisNodetype
 from node_agent.model.db import db
 
 
-def test_db(app):
+def test_db(fastapi_app):
     server = Server(name="test_server", ip="127.0.0.1")
-    app.app_context()
     db.session.add(server)
     entrypoint = Entrypoint(
         name="test_oasis",
