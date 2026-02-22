@@ -10,3 +10,4 @@ python_utils
 /settings
 /venv
 .env*
+swagger.json

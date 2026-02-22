@@ -28,8 +28,9 @@ def _init_db():
     )
 
 
-def init_app():
-    _init_db()
+def init_app(init_db=True):
+    if init_db:
+        _init_db()
 
     app = FastAPI(title="node_agent", version="1.0.0")
     app.add_middleware(
