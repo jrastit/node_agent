@@ -75,6 +75,7 @@ def add_config_data(data, force=False):
             oasis_config=oasis_config_db,
         )
         db.session.add(paratime_config_db)
+        oasis_config_db.oasis_config_paratime.append(paratime_config_db)
     db.session.commit()
     oasis_config = map_config_data(oasis_config_db)
     return oasis_config
