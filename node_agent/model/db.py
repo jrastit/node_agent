@@ -37,6 +37,7 @@ class Database:
         if self.engine is not None:
             return
         options = engine_options or {}
+        options.setdefault("pool_pre_ping", True)
         self.engine = create_engine(database_uri, **options)
         self.session.configure(bind=self.engine)
 

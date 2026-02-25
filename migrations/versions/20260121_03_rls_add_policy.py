@@ -31,6 +31,13 @@ def upgrade() -> None:
     )
     op.create_entity(public_server_server_select_org_member)
 
+    public_organisation_organisation_select_org_member = PGPolicy(
+        schema="public",
+        signature="organisation_select_org_member",
+        on_entity="public.organisation",
+        definition="AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(id))",
+    )
+    op.create_entity(public_organisation_organisation_select_org_member)
     # ### end Alembic commands ###
     op.execute("ALTER TABLE public.server ENABLE ROW LEVEL SECURITY;")
 
@@ -45,5 +52,13 @@ def downgrade() -> None:
         definition="AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organisation_id))",
     )
     op.drop_entity(public_server_server_select_org_member)
+
+    public_organisation_organisation_select_org_member = PGPolicy(
+        schema="public",
+        signature="organisation_select_org_member",
+        on_entity="public.organisation",
+        definition="AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(id))",
+    )
+    op.drop_entity(public_organisation_organisation_select_org_member)
 
     # ### end Alembic commands ###
