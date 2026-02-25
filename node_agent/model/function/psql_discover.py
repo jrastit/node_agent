@@ -4,7 +4,6 @@ list_public_tables = PGFunction(
     schema="public",
     signature="list_public_tables()",
     definition="""
-create or replace function public.list_public_tables()
 returns table (
   table_name text
 )

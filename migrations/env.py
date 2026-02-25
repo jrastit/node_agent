@@ -5,14 +5,17 @@ from alembic_utils.pg_policy import PGPolicy
 from node_agent.model.function.psql_user_management import (
     current_user_id,
     is_org_member,
-    server_select_org_member,
+    is_user,
 )
+from node_agent.model.server import server_select_policy
+from node_agent.model.function.psql_discover import list_public_tables
 
 import pkgutil
 import importlib
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import inspect
 
 
 from alembic import context
@@ -113,12 +116,28 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
         )
+        public_tables = set(
+            inspect(connection).get_table_names(schema="public")
+        )
+        entities = [list_public_tables]
+
+        if "user" in public_tables:
+            entities.extend([is_user, current_user_id])
+
+        if {"user", "group", "user_group_association"}.issubset(public_tables):
+            entities.append(is_org_member)
+
+        if {
+            "server",
+            "organisation",
+            "user",
+            "group",
+            "user_group_association",
+        }.issubset(public_tables):
+            entities.append(server_select_policy)
+
         register_entities(
-            [
-                current_user_id,
-                is_org_member,
-                server_select_org_member,
-            ],
+            entities,
             "public",
             entity_types=[PGFunction, PGPolicy],
         )
