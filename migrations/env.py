@@ -1,3 +1,4 @@
+import logging
 from logging.config import fileConfig
 from alembic_utils.replaceable_entity import register_entities
 from alembic_utils.pg_function import PGFunction
@@ -23,6 +24,8 @@ from alembic import context
 from node_agent.config import get_database_uri
 import node_agent.model as model_pkg  # <- IMPORTANT
 
+
+logger = logging.getLogger("alembic.env")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -53,7 +56,7 @@ def env_flag(name: str, default: str = "0") -> bool:
 
 PGFUNCTION_TABLE_FILTER_ENABLED = env_flag(
     "ALEMBIC_FILTER_PGFUNCTION_BY_TABLES",
-    "0",
+    "1",
 )
 PUBLIC_TABLE_REF_PATTERN = re.compile(
     r'\bpublic\."([^"]+)"|\bpublic\.([a-zA-Z_][a-zA-Z0-9_]*)'
@@ -122,17 +125,82 @@ def get_function_public_table_refs(function: PGFunction) -> set[str]:
     definition = getattr(function, "definition", "") or ""
     refs: set[str] = set()
 
-    for quoted_name, plain_name in PUBLIC_TABLE_REF_PATTERN.findall(definition):
+    for quoted_name, plain_name in PUBLIC_TABLE_REF_PATTERN.findall(
+        definition
+    ):
         table_name = quoted_name or plain_name
         if table_name:
             refs.add(table_name)
 
+    refs -= set(PUBLIC_FUNCTION_REF_PATTERN.findall(definition))
     return refs
 
 
 def get_function_name(function: PGFunction) -> str:
     signature = getattr(function, "signature", "") or ""
     return signature.split("(", maxsplit=1)[0].strip()
+
+
+def get_function_public_function_refs(function: PGFunction) -> set[str]:
+    definition = getattr(function, "definition", "") or ""
+    function_name = get_function_name(function)
+    return {
+        ref
+        for ref in PUBLIC_FUNCTION_REF_PATTERN.findall(definition)
+        if ref != function_name
+    }
+
+
+def order_functions_by_dependency(
+    functions: list[PGFunction], existing_functions: set[str]
+) -> tuple[list[PGFunction], list[tuple[PGFunction, set[str]]]]:
+    by_name: dict[str, PGFunction] = {
+        get_function_name(function): function for function in functions
+    }
+    selected_names = set(by_name.keys())
+    missing_deps: dict[str, set[str]] = {}
+    deps_by_name: dict[str, set[str]] = {}
+
+    for name, function in by_name.items():
+        refs = get_function_public_function_refs(function)
+        managed_deps = refs & selected_names
+        unresolved = refs - managed_deps - existing_functions
+        deps_by_name[name] = managed_deps
+        if unresolved:
+            missing_deps[name] = unresolved
+
+    missing_names = set(missing_deps.keys())
+    filtered_names = selected_names - missing_names
+    deps_by_name = {
+        name: deps - missing_names
+        for name, deps in deps_by_name.items()
+        if name in filtered_names
+    }
+
+    ordered_names: list[str] = []
+    resolved: set[str] = set(existing_functions)
+    pending = set(filtered_names)
+
+    while pending:
+        ready = sorted(
+            name
+            for name in pending
+            if deps_by_name.get(name, set()).issubset(resolved)
+        )
+        if not ready:
+            ready = [sorted(pending)[0]]
+
+        for name in ready:
+            ordered_names.append(name)
+            resolved.add(name)
+            pending.remove(name)
+
+    ordered_functions = [by_name[name] for name in ordered_names]
+    skipped_functions = [
+        (by_name[name], missing_deps[name]) for name in sorted(missing_names)
+    ]
+
+    return ordered_functions, skipped_functions
 
 
 def get_policy_public_function_refs(policy: PGPolicy) -> set[str]:
@@ -158,21 +226,7 @@ print("METADATA TABLES:", sorted(Base.metadata.tables.keys()))
 
 target_metadata = Base.metadata
 
-# def build_db_url() -> str:
-#     user = settings.get("DB_USER") or settings.get("db_user")
-#     password = settings.get("DB_PASSWORD") or settings.get("db_password")
-#     host = settings.get("DB_HOST") or settings.get("db_host")
-#     port = settings.get("DB_PORT") or settings.get("db_port", 5432)
-#     name = settings.get("DB_NAME") or settings.get("db_name", "postgres")
-#     sslmode = settings.get("DB_SSLMODE") or settings.get("db_sslmode", "require")
 
-#     # driver: psycopg2 ou psycopg (selon ton install)
-#     driver = settings.get("DB_DRIVER") or "postgresql+psycopg2"
-
-#     # URL SQLAlchemy
-#     return f"{driver}://{user}:{password}@{host}:{port}/{name}?sslmode={sslmode}"
-
-# 3) Écraser l’URL d’alembic.ini dynamiquement
 config.set_main_option("sqlalchemy.url", get_database_uri())
 ALEMBIC_VERSION_SCHEMA = "alembic"
 
@@ -241,6 +295,7 @@ def run_migrations_online() -> None:
         public_tables = set(
             inspect(connection).get_table_names(schema="public")
         )
+        logger.info(f"Public tables in database: {sorted(public_tables)}")
         existing_public_functions = get_existing_public_functions(connection)
         discovered_entities = get_alembic_entities_from_model()
         function_entities: list[PGFunction] = []
@@ -251,14 +306,32 @@ def run_migrations_online() -> None:
                 table_ref = entity.on_entity.split(".")[-1].strip('"')
                 if table_ref in public_tables:
                     policy_entities.append(entity)
+                else:
+                    logger.warning(
+                        f"Skipping policy '{entity.signature}' referencing non-public table '{table_ref}'"
+                    )
                 continue
 
             if PGFUNCTION_TABLE_FILTER_ENABLED:
                 referenced_tables = get_function_public_table_refs(entity)
                 if not referenced_tables.issubset(public_tables):
+                    logger.warning(
+                        f"Skipping function '{entity.signature}' referencing non-public tables: {referenced_tables - public_tables}"
+                    )
                     continue
 
             function_entities.append(entity)
+
+        function_entities, skipped_due_to_function_deps = (
+            order_functions_by_dependency(
+                function_entities,
+                existing_public_functions,
+            )
+        )
+        for function, missing_functions in skipped_due_to_function_deps:
+            logger.warning(
+                f"Skipping function '{function.signature}' referencing missing functions: {missing_functions}"
+            )
 
         managed_function_names = {
             get_function_name(function) for function in function_entities
