@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from alembic_utils.pg_policy import PGPolicy
 from dataclasses_jsonschema import JsonSchemaMixin
 from sqlalchemy.orm import Mapped
 
@@ -32,3 +33,16 @@ class Entrypoint(Base, JsonSchemaMixin):
         "server.id", ondelete="CASCADE"
     )
     server: Mapped["Server"] = column_relationship()  # type: ignore
+
+
+entrypoint_select_policy = PGPolicy(
+    schema="public",
+    signature="entrypoint_select_org_member",  # policy name only
+    on_entity="public.entrypoint",  # target table
+    definition="""
+        AS PERMISSIVE
+        FOR SELECT
+        TO authenticated
+        USING (public.is_server_member(server_id))
+    """,
+)

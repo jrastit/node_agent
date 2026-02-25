@@ -58,6 +58,30 @@ $$;
 """,
 )
 
+is_group_org_member = PGFunction(
+    schema="public",
+    signature="is_group_org_member(p_group_id integer)",
+    definition=r"""
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public."group" g_target
+    join public."group" g_member
+      on g_member.organisation_id = g_target.organisation_id
+    join public.user_group_association uga
+      on uga.group_id = g_member.id
+    where uga.user_id = public.current_user_id()
+      and g_target.id = p_group_id
+  );
+$$;
+""",
+)
+
 is_server_member = PGFunction(
     schema="public",
     signature="is_server_member(p_server_id integer)",

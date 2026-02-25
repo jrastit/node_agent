@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 import uuid
+from alembic_utils.pg_policy import PGPolicy
 from sqlalchemy.orm import Mapped, relationship
 from node_agent.model.db import (
     Base,
@@ -25,3 +26,16 @@ class User(Base):
     )
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
+
+
+user_select_policy = PGPolicy(
+    schema="public",
+    signature="user_select",
+    on_entity="public.user",
+    definition="""
+        AS PERMISSIVE
+        FOR SELECT
+        TO authenticated
+        USING (public.is_user())
+    """,
+)

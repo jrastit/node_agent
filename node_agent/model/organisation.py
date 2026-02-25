@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from alembic_utils.pg_policy import PGPolicy
 from sqlalchemy.orm import Mapped
 from node_agent.model.db import (
     Base,
@@ -26,3 +27,16 @@ class Organisation(Base):
     parent: Mapped["Organisation"] = column_relationship(
         foreign_keys="Organisation.parent_id"
     )
+
+
+organisation_select_policy = PGPolicy(
+    schema="public",
+    signature="organisation_select",
+    on_entity="public.organisation",
+    definition="""
+        AS PERMISSIVE
+        FOR SELECT
+        TO authenticated
+        USING (public.is_org_member(id))
+    """,
+)

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from alembic_utils.pg_policy import PGPolicy
 from sqlalchemy import Table, Column, ForeignKey, Integer
 from sqlalchemy.orm import Mapped
 from node_agent.model.db import (
@@ -31,3 +32,28 @@ class Group(Base):
     name: Mapped[str] = column_name()
     organisation_id: Mapped[int] = column_foreign_key("organisation.id")
     organisation: Mapped["Organisation"] = column_relationship()  # type: ignore
+
+
+group_select_policy = PGPolicy(
+    schema="public",
+    signature="group_select",
+    on_entity="public.group",
+    definition="""
+        AS PERMISSIVE
+        FOR SELECT
+        TO authenticated
+        USING (public.is_org_member(organisation_id))
+    """,
+)
+
+user_group_association_select_policy = PGPolicy(
+    schema="public",
+    signature="user_group_association_select",
+    on_entity="public.user_group_association",
+    definition="""
+        AS PERMISSIVE
+        FOR SELECT
+        TO authenticated
+        USING (public.is_group_org_member(group_id))
+    """,
+)

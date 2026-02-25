@@ -1,8 +1,8 @@
 """tables
 
-Revision ID: 7e66d01312d8
+Revision ID: 1
 Revises: 
-Create Date: 2026-02-25 22:45:58.295013
+Create Date: 2026-02-25 23:09:26.619660
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ from alembic_utils.pg_function import PGFunction
 from sqlalchemy import text as sql_text
 
 # revision identifiers, used by Alembic.
-revision: str = '7e66d01312d8'
+revision: str = '1'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
