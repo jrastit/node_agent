@@ -72,6 +72,24 @@ target_metadata = Base.metadata
 
 # 3) Écraser l’URL d’alembic.ini dynamiquement
 config.set_main_option("sqlalchemy.url", get_database_uri())
+ALEMBIC_VERSION_SCHEMA = "alembic"
+
+
+def ensure_alembic_version_schema(connection) -> None:
+    connection.exec_driver_sql(
+        f'CREATE SCHEMA IF NOT EXISTS "{ALEMBIC_VERSION_SCHEMA}"'
+    )
+
+
+# def enable_rls_for_all_public_tables(connection) -> None:
+#     public_tables = set(inspect(connection).get_table_names(schema="public"))
+
+#     for table_name in sorted(public_tables):
+#         if table_name == "alembic_version":
+#             continue
+#         connection.exec_driver_sql(
+#             f'ALTER TABLE public."{table_name}" ENABLE ROW LEVEL SECURITY'
+#         )
 
 
 def run_migrations_offline() -> None:
@@ -90,6 +108,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        version_table_schema=ALEMBIC_VERSION_SCHEMA,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -112,9 +131,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        ensure_alembic_version_schema(connection)
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            version_table_schema=ALEMBIC_VERSION_SCHEMA,
         )
         public_tables = set(
             inspect(connection).get_table_names(schema="public")
@@ -144,6 +165,7 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+            # enable_rls_for_all_public_tables(connection)
 
 
 if context.is_offline_mode():

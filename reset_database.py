@@ -10,7 +10,10 @@ inspector = inspect(db.engine)
 schemas = inspector.get_schema_names()
 
 for schema in schemas:
-    if schema == "public":
+    if schema == "alembic":
+        print("Dropping schema: %s" % schema)
+        db.session.execute(text('DROP SCHEMA IF EXISTS "%s" CASCADE' % schema))
+    elif schema == "public":
         print("Dropping schema: %s" % schema)
         for table_name in inspector.get_table_names(schema=schema):
             print("Table: %s" % table_name)
@@ -50,4 +53,5 @@ for schema in schemas:
             )
     else:
         print("Skipping schema: %s" % schema)
+db.session.execute(text('CREATE SCHEMA IF NOT EXISTS "public"'))
 db.session.commit()
