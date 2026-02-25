@@ -38,8 +38,19 @@ def upgrade() -> None:
         definition="AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(id))",
     )
     op.create_entity(public_organisation_organisation_select_org_member)
+
+    public_entrypoint_entrypoint_select_server_member = PGPolicy(
+        schema="public",
+        signature="entrypoint_select_server_member",
+        on_entity="public.entrypoint",
+        definition="AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_member(server_id))",
+    )
+    op.create_entity(public_entrypoint_entrypoint_select_server_member)
+
     # ### end Alembic commands ###
     op.execute("ALTER TABLE public.server ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE public.organisation ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE public.entrypoint ENABLE ROW LEVEL SECURITY;")
 
 
 def downgrade() -> None:
@@ -61,4 +72,14 @@ def downgrade() -> None:
     )
     op.drop_entity(public_organisation_organisation_select_org_member)
 
-    # ### end Alembic commands ###
+    public_entrypoint_entrypoint_select_server_member = PGPolicy(
+        schema="public",
+        signature="entrypoint_select_server_member",
+        on_entity="public.entrypoint",
+        definition="AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_member(server_id))",
+    )
+    op.drop_entity(public_entrypoint_entrypoint_select_server_member)
+
+    op.execute("ALTER TABLE public.server DISABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE public.organisation DISABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE public.entrypoint DISABLE ROW LEVEL SECURITY;")

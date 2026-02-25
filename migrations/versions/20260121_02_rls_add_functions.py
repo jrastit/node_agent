@@ -44,6 +44,13 @@ def upgrade() -> None:
     )
     op.create_entity(public_is_org_member)
 
+    public_is_server_member = PGFunction(
+        schema="public",
+        signature="is_server_member(p_server_id integer)",
+        definition="returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server s\n    join public.organisation o on o.id = s.organisation_id\n    where s.id = p_server_id\n      and public.is_org_member(o.id)\n  );\n$$",
+    )
+    op.create_entity(public_is_server_member)
+
     # ### end Alembic commands ###
 
 
@@ -70,5 +77,12 @@ def downgrade() -> None:
         definition='returns integer\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select u.id\n  from public."user" u\n  where u.auth_user_id = auth.uid()\n$$',
     )
     op.drop_entity(public_current_user_id)
+
+    public_is_server_member = PGFunction(
+        schema="public",
+        signature="is_server_member(p_server_id integer)",
+        definition="returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server s\n    join public.organisation o on o.id = s.organisation_id\n    where s.id = p_server_id\n      and public.is_org_member(o.id)\n  );\n$$",
+    )
+    op.drop_entity(public_is_server_member)
 
     # ### end Alembic commands ###

@@ -40,6 +40,27 @@ $$;
 """,
 )
 
+is_server_member = PGFunction(
+    schema="public",
+    signature="is_server_member(p_server_id integer)",
+    definition=r"""
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.server s
+    join public.organisation o on o.id = s.organisation_id
+    where s.id = p_server_id
+      and public.is_org_member(o.id)
+  );
+$$;
+""",
+)
+
 server_select_org_member = PGPolicy(
     schema="public",
     signature="server_select_org_member",  # policy name only
