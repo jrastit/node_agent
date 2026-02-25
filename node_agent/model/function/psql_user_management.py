@@ -1,5 +1,4 @@
 from alembic_utils.pg_function import PGFunction
-from alembic_utils.pg_policy import PGPolicy
 
 
 current_user_id = PGFunction(

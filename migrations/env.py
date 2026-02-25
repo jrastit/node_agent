@@ -2,16 +2,16 @@ from logging.config import fileConfig
 from alembic_utils.replaceable_entity import register_entities
 from alembic_utils.pg_function import PGFunction
 from alembic_utils.pg_policy import PGPolicy
-from node_agent.model.function.psql_user_management import (
-    current_user_id,
-    is_org_member,
-    is_user,
-)
-from node_agent.model.server import server_select_policy
-from node_agent.model.function.psql_discover import list_public_tables
+from types import ModuleType
 
 import pkgutil
 import importlib
+import importlib.util
+import sys
+import os
+import re
+import inspect as pyinspect
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -42,12 +42,114 @@ app = init_app()
 from node_agent.model.db import Base
 
 
+def env_flag(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+PGFUNCTION_TABLE_FILTER_ENABLED = env_flag(
+    "ALEMBIC_FILTER_PGFUNCTION_BY_TABLES",
+    "0",
+)
+PUBLIC_TABLE_REF_PATTERN = re.compile(
+    r'\bpublic\."([^"]+)"|\bpublic\.([a-zA-Z_][a-zA-Z0-9_]*)'
+)
+PUBLIC_FUNCTION_REF_PATTERN = re.compile(
+    r"\bpublic\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\("
+)
+
+
 def import_all_models():
-    package = model_pkg
-    for _, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
-        if is_pkg:
+    package_name = model_pkg.__name__
+    imported_modules: set[str] = set()
+
+    for _, module_name, _ in pkgutil.walk_packages(
+        model_pkg.__path__,
+        prefix=f"{package_name}.",
+    ):
+        importlib.import_module(module_name)
+        imported_modules.add(module_name)
+
+    package_paths = [Path(path) for path in model_pkg.__path__]
+    for package_path in package_paths:
+        for py_file in package_path.rglob("*.py"):
+            if py_file.name == "__init__.py":
+                continue
+
+            rel_module = py_file.relative_to(package_path).with_suffix("")
+            module_name = f"{package_name}.{'.'.join(rel_module.parts)}"
+            if module_name in imported_modules:
+                continue
+
+            spec = importlib.util.spec_from_file_location(module_name, py_file)
+            if spec is None or spec.loader is None:
+                continue
+
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
+            imported_modules.add(module_name)
+
+
+def get_alembic_entities_from_model() -> list[PGFunction | PGPolicy]:
+    entities: list[PGFunction | PGPolicy] = []
+    seen_ids: set[int] = set()
+
+    for module in list(sys.modules.values()):
+        if not isinstance(module, ModuleType):
             continue
-        importlib.import_module(f"{package.__name__}.{module_name}")
+
+        module_name = getattr(module, "__name__", "")
+        if not module_name.startswith(f"{model_pkg.__name__}."):
+            continue
+
+        for _, obj in pyinspect.getmembers(module):
+            if (
+                isinstance(obj, (PGFunction, PGPolicy))
+                and id(obj) not in seen_ids
+            ):
+                seen_ids.add(id(obj))
+                entities.append(obj)
+
+    return entities
+
+
+def get_function_public_table_refs(function: PGFunction) -> set[str]:
+    definition = getattr(function, "definition", "") or ""
+    refs: set[str] = set()
+
+    for quoted_name, plain_name in PUBLIC_TABLE_REF_PATTERN.findall(definition):
+        table_name = quoted_name or plain_name
+        if table_name:
+            refs.add(table_name)
+
+    return refs
+
+
+def get_function_name(function: PGFunction) -> str:
+    signature = getattr(function, "signature", "") or ""
+    return signature.split("(", maxsplit=1)[0].strip()
+
+
+def get_policy_public_function_refs(policy: PGPolicy) -> set[str]:
+    definition = getattr(policy, "definition", "") or ""
+    return set(PUBLIC_FUNCTION_REF_PATTERN.findall(definition))
+
+
+def get_existing_public_functions(connection) -> set[str]:
+    rows = connection.exec_driver_sql(
+        """
+        SELECT p.proname
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        """
+    )
+    return {row[0] for row in rows}
 
 
 import_all_models()
@@ -81,15 +183,15 @@ def ensure_alembic_version_schema(connection) -> None:
     )
 
 
-# def enable_rls_for_all_public_tables(connection) -> None:
-#     public_tables = set(inspect(connection).get_table_names(schema="public"))
+def enable_rls_for_all_public_tables(connection) -> None:
+    public_tables = set(inspect(connection).get_table_names(schema="public"))
 
-#     for table_name in sorted(public_tables):
-#         if table_name == "alembic_version":
-#             continue
-#         connection.exec_driver_sql(
-#             f'ALTER TABLE public."{table_name}" ENABLE ROW LEVEL SECURITY'
-#         )
+    for table_name in sorted(public_tables):
+        if table_name == "alembic_version":
+            continue
+        connection.exec_driver_sql(
+            f'ALTER TABLE public."{table_name}" ENABLE ROW LEVEL SECURITY'
+        )
 
 
 def run_migrations_offline() -> None:
@@ -131,7 +233,6 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        ensure_alembic_version_schema(connection)
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
@@ -140,22 +241,38 @@ def run_migrations_online() -> None:
         public_tables = set(
             inspect(connection).get_table_names(schema="public")
         )
-        entities = [list_public_tables]
+        existing_public_functions = get_existing_public_functions(connection)
+        discovered_entities = get_alembic_entities_from_model()
+        function_entities: list[PGFunction] = []
+        policy_entities: list[PGPolicy] = []
 
-        if "user" in public_tables:
-            entities.extend([is_user, current_user_id])
+        for entity in discovered_entities:
+            if isinstance(entity, PGPolicy):
+                table_ref = entity.on_entity.split(".")[-1].strip('"')
+                if table_ref in public_tables:
+                    policy_entities.append(entity)
+                continue
 
-        if {"user", "group", "user_group_association"}.issubset(public_tables):
-            entities.append(is_org_member)
+            if PGFUNCTION_TABLE_FILTER_ENABLED:
+                referenced_tables = get_function_public_table_refs(entity)
+                if not referenced_tables.issubset(public_tables):
+                    continue
 
-        if {
-            "server",
-            "organisation",
-            "user",
-            "group",
-            "user_group_association",
-        }.issubset(public_tables):
-            entities.append(server_select_policy)
+            function_entities.append(entity)
+
+        managed_function_names = {
+            get_function_name(function) for function in function_entities
+        }
+
+        entities: list[PGFunction | PGPolicy] = list(function_entities)
+        for policy in policy_entities:
+            referenced_functions = get_policy_public_function_refs(policy)
+            missing_functions = referenced_functions - (
+                managed_function_names | existing_public_functions
+            )
+            if missing_functions:
+                continue
+            entities.append(policy)
 
         register_entities(
             entities,
@@ -164,8 +281,9 @@ def run_migrations_online() -> None:
         )
 
         with context.begin_transaction():
+            ensure_alembic_version_schema(connection)
             context.run_migrations()
-            # enable_rls_for_all_public_tables(connection)
+            enable_rls_for_all_public_tables(connection)
 
 
 if context.is_offline_mode():
