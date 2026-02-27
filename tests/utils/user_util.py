@@ -2,6 +2,7 @@ import uuid
 import logging
 
 from node_agent.config import settings
+from node_agent.data.organisation_data import organisation_data_create
 from node_agent.service.supabase.supabase_auth import (
     supabase_auth_with_password,
     supabase_get_user_list_from_email,
@@ -53,6 +54,17 @@ def user_util_get_test_user(random=False):
     test_user = user
 
     return test_user_session, test_user
+
+
+def user_util_get_test_organisation(random=False):
+    organisation_name = "test_organisation"
+    if random:
+        organisation_name += f"_{uuid.uuid4()}"
+    session, user = user_util_get_test_user(random=random)
+    organisation = organisation_data_create(
+        name=organisation_name, owner_id=user["id"]
+    )
+    return session, user, organisation
 
 
 def user_util_cleanup_test_user():

@@ -2,7 +2,7 @@ import logging
 import supabase
 
 from node_agent.config import settings
-from node_agent.data.user_data import data_user_delete, get_user_from_supabase
+from node_agent.data.user_data import user_data_delete, user_data_from_supabase
 from node_agent.service.supabase.supabase_client import supabase_client
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ def supabase_get_user_from_email(email: str) -> dict:
     if len(users) == 0:
         logger.warning(f"No user found with email: {email}")
         return None
-    return get_user_from_supabase(users[0])
+    return user_data_from_supabase(users[0])
 
 
 def supabase_get_user_list_from_email(
@@ -27,7 +27,7 @@ def supabase_get_user_list_from_email(
         users = [user for user in users if user.email.startswith(email_start)]
     if email_end is not None:
         users = [user for user in users if user.email.endswith(email_end)]
-    return [get_user_from_supabase(user) for user in users]
+    return [user_data_from_supabase(user) for user in users]
 
 
 def supabase_auth_with_token(token: str) -> dict:
@@ -35,7 +35,7 @@ def supabase_auth_with_token(token: str) -> dict:
     try:
         response = client.auth.get_user(token)
         supabase_user = response.user
-        return get_user_from_supabase(supabase_user)
+        return user_data_from_supabase(supabase_user)
     except Exception as e:
         logger.error(f"Authentication failed: {e}", exc_info=True)
         return None
@@ -50,7 +50,7 @@ def supabase_register_user(email: str, password: str) -> dict:
         if response.user is None:
             raise Exception("User registration failed, no user returned")
         supabase_user = response.user
-        user = get_user_from_supabase(supabase_user)
+        user = user_data_from_supabase(supabase_user)
         return user
     except Exception as e:
         logger.error(f"User registration failed: {e}", exc_info=True)
@@ -61,7 +61,7 @@ def supabase_delete_user(user: dict) -> bool:
     client = supabase_client()
     try:
         client.auth.admin.delete_user(user["auth_user_id"])
-        data_user_delete(user["id"])
+        user_data_delete(user["id"])
         return True
     except Exception as e:
         logger.error(f"User deletion failed: {e}", exc_info=True)
@@ -84,7 +84,7 @@ def supabase_auth_with_password(email: str, password: str) -> tuple:
             return None, None
         supabase_user = response.user
         session = response.session
-        return session, get_user_from_supabase(supabase_user)
+        return session, user_data_from_supabase(supabase_user)
     except Exception as e:
         logger.error(f"Authentication failed: {e}", exc_info=True)
         return None, None

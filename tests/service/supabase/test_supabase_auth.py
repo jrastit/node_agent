@@ -1,5 +1,6 @@
 import logging
 
+from node_agent.data.organisation_data import organisation_data_create
 from node_agent.service.supabase.supabase_auth import supabase_auth_with_token
 from tests.utils.user_util import user_util_get_test_user
 
@@ -27,3 +28,19 @@ def test_supabase_test_user():
     assert user3["id"] is not None
     assert user3["id"] != user["id"]
     assert user3["auth_user_id"] != user["auth_user_id"]
+    organisation = organisation_data_create(
+        name="test_organisation", owner_id=user3["id"]
+    )
+    assert organisation is not None
+    assert "id" in organisation
+    assert "name" in organisation
+    assert organisation["name"] == "test_organisation"
+    assert organisation["id"] is not None
+    organisation = organisation_data_create(
+        name="test_organisation", owner_id=user3["id"]
+    )
+    assert organisation is not None
+    assert "id" in organisation
+    assert "name" in organisation
+    assert organisation["name"] == "test_organisation"
+    assert organisation["id"] is not None

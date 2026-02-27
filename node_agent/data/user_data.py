@@ -13,7 +13,7 @@ def map_user(user_db):
     }
 
 
-def get_user_from_supabase(supabase_user):
+def user_data_from_supabase(supabase_user):
     if supabase_user.id is None:
         return None
     user = (
@@ -29,7 +29,7 @@ def get_user_from_supabase(supabase_user):
     return map_user(user)
 
 
-def data_user_delete(user_id: int):
+def user_data_delete(user_id: int):
     user = db.session.query(User).filter_by(id=user_id).first()
     if user is not None:
         db.session.delete(user)
