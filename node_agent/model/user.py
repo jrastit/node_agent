@@ -23,6 +23,7 @@ class User(Base):
     groups: Mapped[list["Group"]] = relationship(  # type: ignore
         "Group",
         secondary=user_group_association,
+        default_factory=list,
     )
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
