@@ -24,6 +24,12 @@ from node_agent.model.oasis.network import OasisNetwork
 from node_agent.model.oasis.nodetype import OasisNodetype
 from node_agent.myapp import init_app
 from node_agent.utils.thread import get_nb_thread, set_thread_available
+from tests.utils.user_util import user_util_cleanup_test_user
+
+
+def pytest_sessionstart(session):
+    init_app()
+    user_util_cleanup_test_user()
 
 
 @pytest.fixture

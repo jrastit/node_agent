@@ -2,7 +2,7 @@ import logging
 import supabase
 
 from node_agent.config import settings
-from node_agent.data.user_data import get_user_from_supabase
+from node_agent.data.user_data import data_user_delete, get_user_from_supabase
 from node_agent.service.supabase.supabase_client import supabase_client
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,18 @@ def supabase_get_user_from_email(email: str) -> dict:
         logger.warning(f"No user found with email: {email}")
         return None
     return get_user_from_supabase(users[0])
+
+
+def supabase_get_user_list_from_email(
+    email_start: str | None, email_end: str | None
+) -> dict:
+    client = supabase_client()
+    users = client.auth.admin.list_users()
+    if email_start is not None:
+        users = [user for user in users if user.email.startswith(email_start)]
+    if email_end is not None:
+        users = [user for user in users if user.email.endswith(email_end)]
+    return [get_user_from_supabase(user) for user in users]
 
 
 def supabase_auth_with_token(token: str) -> dict:
@@ -43,6 +55,17 @@ def supabase_register_user(email: str, password: str) -> dict:
     except Exception as e:
         logger.error(f"User registration failed: {e}", exc_info=True)
         return None
+
+
+def supabase_delete_user(user: dict) -> bool:
+    client = supabase_client()
+    try:
+        client.auth.admin.delete_user(user["auth_user_id"])
+        data_user_delete(user["id"])
+        return True
+    except Exception as e:
+        logger.error(f"User deletion failed: {e}", exc_info=True)
+        return False
 
 
 def supabase_auth_with_password(email: str, password: str) -> tuple:

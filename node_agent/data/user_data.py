@@ -27,3 +27,10 @@ def get_user_from_supabase(supabase_user):
         db.session.commit()
 
     return map_user(user)
+
+
+def data_user_delete(user_id: int):
+    user = db.session.query(User).filter_by(id=user_id).first()
+    if user is not None:
+        db.session.delete(user)
+        db.session.commit()

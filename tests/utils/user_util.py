@@ -4,9 +4,12 @@ import logging
 from node_agent.config import settings
 from node_agent.service.supabase.supabase_auth import (
     supabase_auth_with_password,
+    supabase_get_user_list_from_email,
     supabase_register_user,
     supabase_get_user_from_email,
+    supabase_delete_user,
 )
+from node_agent.service.supabase.supabase_client import supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -50,3 +53,16 @@ def user_util_get_test_user(random=False):
     test_user = user
 
     return test_user_session, test_user
+
+
+def user_util_cleanup_test_user():
+    try:
+        users = supabase_get_user_list_from_email("test_user_", "@example.com")
+        for u in users:
+            supabase_delete_user(u)
+            logger.info(f"Deleted test user with email: {u['auth_user_id']}")
+    except Exception as e:
+        logger.error(
+            f"Failed to delete test user : {e}",
+            exc_info=True,
+        )
