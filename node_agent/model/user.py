@@ -37,6 +37,6 @@ user_select_policy = PGPolicy(
         AS PERMISSIVE
         FOR SELECT
         TO authenticated
-        USING (public.is_user())
+        USING (auth.uid() = auth_user_id)
     """,
 )

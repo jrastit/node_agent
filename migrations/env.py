@@ -247,6 +247,13 @@ def enable_rls_for_all_public_tables(connection) -> None:
             f'ALTER TABLE public."{table_name}" ENABLE ROW LEVEL SECURITY'
         )
 
+    connection.exec_driver_sql(
+        "grant usage on schema public to anon, authenticated, service_role"
+    )
+    connection.exec_driver_sql(
+        "grant select on all tables in schema public to authenticated, service_role"
+    )
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

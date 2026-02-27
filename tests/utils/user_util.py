@@ -1,16 +1,23 @@
 import uuid
 import logging
 
+from supabase import Client
+from supabase_auth import Session
+
 from node_agent.config import settings
 from node_agent.data.organisation_data import organisation_data_create
 from node_agent.service.supabase.supabase_auth import (
     supabase_auth_with_password,
+    supabase_auth_with_token,
     supabase_get_user_list_from_email,
     supabase_register_user,
     supabase_get_user_from_email,
     supabase_delete_user,
 )
-from node_agent.service.supabase.supabase_client import supabase_client
+from node_agent.service.supabase.supabase_client import (
+    supabase_client,
+    supabase_client_from_session,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -78,3 +85,25 @@ def user_util_cleanup_test_user():
             f"Failed to delete test user : {e}",
             exc_info=True,
         )
+
+
+def user_util_get_test_supabase_client(
+    random=False,
+) -> tuple[Client, Session, dict]:
+    session, user = user_util_get_test_user(random=random)
+    assert session is not None, "Failed to get session for test user"
+    assert user is not None, "Failed to get user for test user"
+    client = supabase_client_from_session(session)
+    supabase_user_response = client.auth.get_user()
+    assert (
+        supabase_user_response is not None
+    ), "Failed to get supabase user from session"
+    supabase_id_norm = str(
+        uuid.UUID(str(supabase_user_response.user.id).strip())
+    )
+    auth_id_norm = str(uuid.UUID(str(user["auth_user_id"]).strip()))
+
+    assert (
+        supabase_id_norm == auth_id_norm
+    ), f"Supabase user ID {supabase_id_norm} does not match test user auth_user_id {auth_id_norm}"
+    return client, session, user

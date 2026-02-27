@@ -15,6 +15,10 @@ for schema in schemas:
         db.session.execute(text('DROP SCHEMA IF EXISTS "%s" CASCADE' % schema))
     elif schema == "public":
         print("Dropping schema: %s" % schema)
+        db.session.execute(text('DROP SCHEMA IF EXISTS "%s" CASCADE' % schema))
+        db.session.execute(text('CREATE SCHEMA IF NOT EXISTS "%s"' % schema))
+    elif schema == "public":
+        print("Dropping schema: %s" % schema)
         for table_name in inspector.get_table_names(schema=schema):
             print("Table: %s" % table_name)
             db.session.execute(
