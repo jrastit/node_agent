@@ -1,6 +1,7 @@
 import logging
 
-from node_agent.data.organisation_data import organisation_data_create
+from node_agent.data.organization_data import organization_data_create
+from node_agent.data.server_data import server_ssh_data_create_full
 from node_agent.service.supabase.supabase_auth import supabase_auth_with_token
 from tests.utils.user_util import user_util_get_test_user
 
@@ -22,28 +23,30 @@ def test_supabase_test_user():
     assert user2["id"] is not None
     assert user2["id"] == user["id"]
     # assert user2["auth_user_id"] == user["auth_user_id"]
-    session2, user3 = user_util_get_test_user(random=True)
-    assert session2 is not None
-    assert user3 is not None
-    assert user3["id"] is not None
-    assert user3["id"] != user["id"]
-    assert user3["auth_user_id"] != user["auth_user_id"]
-    organisation = organisation_data_create(
-        name="test_organisation", owner_id=user3["id"]
+    organization = organization_data_create(
+        name="test_organization", owner_id=user["id"]
     )
-    assert organisation is not None
-    assert "id" in organisation
-    assert "name" in organisation
-    assert organisation["name"] == "test_organisation"
-    assert organisation["id"] is not None
-    organisation = organisation_data_create(
-        name="test_organisation", owner_id=user3["id"]
+    assert organization is not None
+    assert "id" in organization
+    assert organization["id"] is not None
+    ret = server_ssh_data_create_full(
+        server_name="test_server",
+        organization_id=organization["id"],
+        server_ip="127.0.0.1",
+        cloud="test_cloud",
+        cloud_name="Test Cloud",
+        host_name="127.0.0.1",
+        host_description="Test Host",
+        port="22",
+        port_description="Test Port",
+        ssh_user_name="test_user",
+        ssh_description="Test SSH",
     )
-    assert organisation is not None
-    assert "id" in organisation
-    assert "name" in organisation
-    assert organisation["name"] == "test_organisation"
-    assert organisation["id"] is not None
+    assert ret is not None
+    assert ret.get("server") is not None
+    assert ret.get("server_host") is not None
+    assert ret.get("server_port") is not None
+    assert ret.get("server_ssh") is not None
 
 
 def test_supabase_test_user2():

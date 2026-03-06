@@ -32,6 +32,25 @@ def pytest_sessionstart(session):
     user_util_cleanup_test_user()
 
 
+@pytest.fixture(autouse=True)
+def db_session_cleanup():
+    from node_agent.model.db import db
+
+    # Ensure each test starts with a clean session state.
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+
+    yield
+
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+    db.remove_session()
+
+
 @pytest.fixture
 def fastapi_app():
     app = init_app()

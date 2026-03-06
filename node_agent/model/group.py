@@ -18,8 +18,18 @@ from node_agent.model.db import (
 user_group_association = Table(
     "user_group_association",
     Base.metadata,
-    Column("user_id", Integer, ForeignKey("user.id"), primary_key=True),
-    Column("group_id", Integer, ForeignKey("group.id"), primary_key=True),
+    Column(
+        "user_id",
+        Integer,
+        ForeignKey("user.id"),
+        primary_key=True,
+    ),
+    Column(
+        "group_id",
+        Integer,
+        ForeignKey("group.id"),
+        primary_key=True,
+    ),
 )
 
 
@@ -30,8 +40,8 @@ class Group(Base):
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
     name: Mapped[str] = column_name()
-    organisation_id: Mapped[int] = column_foreign_key("organisation.id")
-    organisation: Mapped["Organisation"] = column_relationship()  # type: ignore
+    organization_id: Mapped[int] = column_foreign_key("organization.id")
+    organization: Mapped["Organization"] = column_relationship()  # type: ignore
 
 
 group_select_policy = PGPolicy(
@@ -42,7 +52,7 @@ group_select_policy = PGPolicy(
         AS PERMISSIVE
         FOR SELECT
         TO authenticated
-        USING (public.is_org_member(organisation_id))
+        USING (public.is_org_member(organization_id))
     """,
 )
 

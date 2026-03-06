@@ -10,7 +10,13 @@ from tests.utils.api_util import api_put_data
 logger = logging.getLogger()
 
 
-def load_test_node():
+def load_test_node(organization_id=None):
+
+    if organization_id is None:
+        from tests.utils.user_util import user_util_get_test_organization
+
+        _, _, organization = user_util_get_test_organization()
+        organization_id = organization["id"]
 
     node_db = (
         db.session.query(OasisNode)
@@ -29,6 +35,7 @@ def load_test_node():
         {
             "name": "oasis_test_server",
             "ip": settings.test_node_address,
+            "organization_id": organization_id,
         },
     )
     assert "Server" in server_handler

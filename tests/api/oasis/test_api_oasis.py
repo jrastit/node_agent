@@ -2,6 +2,7 @@ from tests.utils.api_util import (
     api_put_data,
 )
 from tests.utils.test_node import load_test_node
+from tests.utils.user_util import user_util_get_test_organization
 
 
 def test_api_oasis_node_post_error(fastapi_app):
@@ -143,5 +144,7 @@ def test_api_oasis_node(fastapi_app):
 
 
 def test_api_oasis_node_save(fastapi_app):
-    load_test_node()
+    _, _, organization = user_util_get_test_organization()
+    organization_id = organization["id"]
+    load_test_node(organization_id)
     api_put_data("/api/oasis/config/save", 200, {})

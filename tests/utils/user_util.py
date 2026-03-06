@@ -5,7 +5,7 @@ from supabase import Client
 from supabase_auth import Session
 
 from node_agent.config import settings
-from node_agent.data.organisation_data import organisation_data_create
+from node_agent.data.organization_data import organization_data_create
 from node_agent.service.supabase.supabase_auth import (
     supabase_auth_with_password,
     supabase_get_user_list_from_email,
@@ -59,15 +59,17 @@ def user_util_get_test_user(random=False):
     return test_user
 
 
-def user_util_get_test_organisation(random=False):
-    organisation_name = "test_organisation"
+def user_util_get_test_organization(
+    random=False,
+) -> tuple[Session, dict, dict]:
+    organization_name = "test_organization"
     if random:
-        organisation_name += f"_{uuid.uuid4()}"
+        organization_name += f"_{uuid.uuid4()}"
     session, user = user_util_get_test_user(random=random)
-    organisation = organisation_data_create(
-        name=organisation_name, owner_id=user["id"]
+    organization = organization_data_create(
+        name=organization_name, owner_id=user["id"]
     )
-    return session, user, organisation
+    return session, user, organization
 
 
 def user_util_cleanup_test_user():

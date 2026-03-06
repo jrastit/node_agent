@@ -5,6 +5,10 @@ from tests.utils.api_util import (
     api_simple_get,
     api_simple_delete,
 )
+from tests.utils.user_util import (
+    user_util_get_test_organization,
+    user_util_get_test_user,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +18,27 @@ def test_api_server_post_error(fastapi_app):
     assert ret is not None
     assert "detail" in ret
 
+    ret = api_put_data(
+        "/api/server",
+        422,
+        {
+            "name": "api_test_server_missing_org",
+            "ip": "127.0.0.1",
+        },
+    )
+    assert ret is not None
+    assert "detail" in ret
+
 
 def test_api_server(fastapi_app):
+    _, _, organization = user_util_get_test_organization()
     server_handler = api_put_data(
         "/api/server",
         200,
         {
             "name": "api_test_server",
             "ip": "127.0.0.1",
+            "organization_id": organization["id"],
         },
     )
     assert "Server" in server_handler
@@ -75,12 +92,14 @@ def test_api_server(fastapi_app):
 
 
 def test_api_server_endpoint(fastapi_app):
+    _, _, organization = user_util_get_test_organization()
     server_handler = api_put_data(
         "/api/server",
         200,
         {
             "name": "api_test_server",
             "ip": "127.0.0.1",
+            "organization_id": organization["id"],
         },
     )
     assert "Server" in server_handler
@@ -102,3 +121,81 @@ def test_api_server_endpoint(fastapi_app):
     assert "Entrypoint" in entrypoint_handler
     entrypoint = entrypoint_handler["Entrypoint"]
     assert "id" in entrypoint
+
+
+def test_api_server_host_ip_ssh(fastapi_app):
+    _, _, organization = user_util_get_test_organization()
+    server_handler = api_put_data(
+        "/api/server",
+        200,
+        {
+            "name": "api_test_server_rel",
+            "ip": "127.0.0.10",
+            "organization_id": organization["id"],
+        },
+    )
+    server = server_handler["Server"]
+    server_id = server["id"]
+
+    server_host_handler = api_put_data(
+        "/api/server/host",
+        200,
+        {
+            "name": "10.0.0.1",
+            "description": "test host",
+            "server_id": server_id,
+        },
+    )
+    assert "ServerHost" in server_host_handler
+    server_host = server_host_handler["ServerHost"]
+    server_host_id = server_host["id"]
+    assert server_host["name"] == "10.0.0.1"
+
+    server_port_handler = api_put_data(
+        "/api/server/port",
+        200,
+        {
+            "port": "2200",
+            "description": "test port",
+            "server_host_id": server_host_id,
+        },
+    )
+    assert "ServerPort" in server_port_handler
+    server_port = server_port_handler["ServerPort"]
+    server_port_id = server_port["id"]
+    assert server_port["port"] == "2200"
+
+    server_ssh_handler = api_put_data(
+        "/api/server/ssh",
+        200,
+        {
+            "user_name": "ubuntu",
+            "description": "test ssh",
+            "server_port_id": server_port_id,
+        },
+    )
+    assert "ServerSSH" in server_ssh_handler
+    server_ssh = server_ssh_handler["ServerSSH"]
+    server_ssh_id = server_ssh["id"]
+    assert server_ssh["user_name"] == "ubuntu"
+
+    server_host_list_handler = api_simple_get("/api/server/host", 200)
+    assert "ServerHost" in server_host_list_handler
+
+    server_ip_list_handler = api_simple_get("/api/server/port", 200)
+    assert "ServerPort" in server_ip_list_handler
+
+    server_ssh_list_handler = api_simple_get("/api/server/ssh", 200)
+    assert "ServerSSH" in server_ssh_list_handler
+
+    ret = api_simple_delete(f"/api/server/ssh/{server_ssh_id}", 200)
+    assert ret["Status"] == "success"
+
+    ret = api_simple_delete(f"/api/server/port/{server_port_id}", 200)
+    assert ret["Status"] == "success"
+
+    ret = api_simple_delete(f"/api/server/host/{server_host_id}", 200)
+    assert ret["Status"] == "success"
+
+    ret = api_simple_delete(f"/api/server/{server_id}", 200)
+    assert ret["Status"] == "success"

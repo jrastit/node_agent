@@ -6,36 +6,35 @@ from sqlalchemy.orm import Mapped
 
 from node_agent.model.db import (
     Base,
+    column_foreign_key_required_cascade,
     intpk,
     column_id,
     column_string_null,
-    column_foreign_key_required_cascade,
     column_relationship,
     column_time_created,
     column_time_updated,
 )
 
 
-class Entrypoint(Base, JsonSchemaMixin):
+@dataclass
+class ServerHost(Base, JsonSchemaMixin):
 
-    __tablename__ = "entrypoint"
+    __tablename__ = "server_host"
     id: Mapped[intpk] = column_id()
     server_id: Mapped[int] = column_foreign_key_required_cascade("server.id")
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
 
     name: Mapped[str] = column_string_null()
-    user: Mapped[str] = column_string_null()
-    path: Mapped[str] = column_string_null()
-    ssh_id: Mapped[str] = column_string_null()
+    description: Mapped[str] = column_string_null()
 
     server: Mapped["Server"] = column_relationship()  # type: ignore
 
 
-entrypoint_select_policy = PGPolicy(
+server_host_select_policy = PGPolicy(
     schema="public",
-    signature="entrypoint_select_org_member",  # policy name only
-    on_entity="public.entrypoint",  # target table
+    signature="server_host_select_org_member",  # policy name only
+    on_entity="public.server_host",  # target table
     definition="""
         AS PERMISSIVE
         FOR SELECT

@@ -51,7 +51,7 @@ def add_config_data(data, force=False):
     oasis_config_db = db.session.query(OasisConfig).filter_by(md5=md5).first()
     if oasis_config_db is not None and not force:
         db.session.commit()
-        return oasis_config_db
+        return map_config_data(oasis_config_db)
     config = get_configue_from_md(data)
     oasis_config_db = OasisConfig(
         md5=md5,
@@ -72,7 +72,7 @@ def add_config_data(data, force=False):
             runtime_version=paratime["runtime_version"],
             runtime_version_url=paratime["runtime_version_url"],
             IAS_proxy=paratime["IAS_proxy"],
-            oasis_config=oasis_config_db,
+            oasis_config_id=oasis_config_db.id,
         )
         db.session.add(paratime_config_db)
         oasis_config_db.oasis_config_paratime.append(paratime_config_db)

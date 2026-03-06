@@ -2,7 +2,7 @@
 
 Revision ID: 2
 Revises: 1
-Create Date: 2026-02-25 23:09:51.480853
+Create Date: 2026-03-06 16:26:00.070366
 
 """
 from typing import Sequence, Union
@@ -38,32 +38,54 @@ def upgrade() -> None:
     )
     op.create_entity(public_is_user)
 
+    public_user_user_select = PGPolicy(
+        schema="public",
+        signature="user_select",
+        on_entity="public.user",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (auth.uid() = auth_user_id)'
+    )
+    op.create_entity(public_user_user_select)
+
     public_is_group_org_member = PGFunction(
         schema="public",
         signature="is_group_org_member(p_group_id integer)",
-        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public."group" g_target\n    join public."group" g_member\n      on g_member.organisation_id = g_target.organisation_id\n    join public.user_group_association uga\n      on uga.group_id = g_member.id\n    where uga.user_id = public.current_user_id()\n      and g_target.id = p_group_id\n  );\n$$'
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public."group" g_target\n    join public."group" g_member\n      on g_member.organization_id = g_target.organization_id\n    join public.user_group_association uga\n      on uga.group_id = g_member.id\n    where uga.user_id = public.current_user_id()\n      and g_target.id = p_group_id\n  );\n$$'
     )
     op.create_entity(public_is_group_org_member)
 
     public_is_org_member = PGFunction(
         schema="public",
         signature="is_org_member(p_org_id integer)",
-        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.user_group_association uga\n    join public."group" g on g.id = uga.group_id\n    where uga.user_id = public.current_user_id()\n      and g.organisation_id = p_org_id\n  );\n$$'
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.user_group_association uga\n    join public."group" g on g.id = uga.group_id\n    where uga.user_id = public.current_user_id()\n      and g.organization_id = p_org_id\n  );\n$$'
     )
     op.create_entity(public_is_org_member)
+
+    public_is_server_host_member = PGFunction(
+        schema="public",
+        signature="is_server_host_member(p_server_host_id integer)",
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server_host si\n    join public.server s on s.id = si.server_id\n    join public.organization o on o.id = s.organization_id\n    where si.id = p_server_host_id\n      and public.is_org_member(o.id)\n  );\n$$'
+    )
+    op.create_entity(public_is_server_host_member)
 
     public_is_server_member = PGFunction(
         schema="public",
         signature="is_server_member(p_server_id integer)",
-        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server s\n    join public.organisation o on o.id = s.organisation_id\n    where s.id = p_server_id\n      and public.is_org_member(o.id)\n  );\n$$'
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server s\n    join public.organization o on o.id = s.organization_id\n    where s.id = p_server_id\n      and public.is_org_member(o.id)\n  );\n$$'
     )
     op.create_entity(public_is_server_member)
+
+    public_is_server_port_member = PGFunction(
+        schema="public",
+        signature="is_server_port_member(p_server_port_id integer)",
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server_port sp\n    join public.server_host si on si.id = sp.server_host_id\n    join public.server s on s.id = si.server_id\n    join public.organization o on o.id = s.organization_id\n    where sp.id = p_server_port_id\n      and public.is_org_member(o.id)\n  );\n$$'
+    )
+    op.create_entity(public_is_server_port_member)
 
     public_group_group_select = PGPolicy(
         schema="public",
         signature="group_select",
         on_entity="public.group",
-        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organisation_id))'
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organization_id))'
     )
     op.create_entity(public_group_group_select)
 
@@ -75,21 +97,13 @@ def upgrade() -> None:
     )
     op.create_entity(public_user_group_association_user_group_association_select)
 
-    public_user_user_select = PGPolicy(
+    public_organization_organization_select = PGPolicy(
         schema="public",
-        signature="user_select",
-        on_entity="public.user",
-        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_user())'
-    )
-    op.create_entity(public_user_user_select)
-
-    public_organisation_organisation_select = PGPolicy(
-        schema="public",
-        signature="organisation_select",
-        on_entity="public.organisation",
+        signature="organization_select",
+        on_entity="public.organization",
         definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(id))'
     )
-    op.create_entity(public_organisation_organisation_select)
+    op.create_entity(public_organization_organization_select)
 
     public_entrypoint_entrypoint_select_org_member = PGPolicy(
         schema="public",
@@ -103,9 +117,33 @@ def upgrade() -> None:
         schema="public",
         signature="server_select_org_member",
         on_entity="public.server",
-        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organisation_id))'
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organization_id))'
     )
     op.create_entity(public_server_server_select_org_member)
+
+    public_server_host_server_host_select_org_member = PGPolicy(
+        schema="public",
+        signature="server_host_select_org_member",
+        on_entity="public.server_host",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_member(server_id))'
+    )
+    op.create_entity(public_server_host_server_host_select_org_member)
+
+    public_server_port_server_port_select_org_member = PGPolicy(
+        schema="public",
+        signature="server_port_select_org_member",
+        on_entity="public.server_port",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_host_member(server_host_id))'
+    )
+    op.create_entity(public_server_port_server_port_select_org_member)
+
+    public_server_ssh_server_ssh_select_org_member = PGPolicy(
+        schema="public",
+        signature="server_ssh_select_org_member",
+        on_entity="public.server_ssh",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_port_member(server_port_id))'
+    )
+    op.create_entity(public_server_ssh_server_ssh_select_org_member)
 
     # ### end Alembic commands ###
 
@@ -113,11 +151,35 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    public_server_ssh_server_ssh_select_org_member = PGPolicy(
+        schema="public",
+        signature="server_ssh_select_org_member",
+        on_entity="public.server_ssh",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_port_member(server_port_id))'
+    )
+    op.drop_entity(public_server_ssh_server_ssh_select_org_member)
+
+    public_server_port_server_port_select_org_member = PGPolicy(
+        schema="public",
+        signature="server_port_select_org_member",
+        on_entity="public.server_port",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_host_member(server_host_id))'
+    )
+    op.drop_entity(public_server_port_server_port_select_org_member)
+
+    public_server_host_server_host_select_org_member = PGPolicy(
+        schema="public",
+        signature="server_host_select_org_member",
+        on_entity="public.server_host",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_server_member(server_id))'
+    )
+    op.drop_entity(public_server_host_server_host_select_org_member)
+
     public_server_server_select_org_member = PGPolicy(
         schema="public",
         signature="server_select_org_member",
         on_entity="public.server",
-        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organisation_id))'
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organization_id))'
     )
     op.drop_entity(public_server_server_select_org_member)
 
@@ -129,21 +191,13 @@ def downgrade() -> None:
     )
     op.drop_entity(public_entrypoint_entrypoint_select_org_member)
 
-    public_organisation_organisation_select = PGPolicy(
+    public_organization_organization_select = PGPolicy(
         schema="public",
-        signature="organisation_select",
-        on_entity="public.organisation",
+        signature="organization_select",
+        on_entity="public.organization",
         definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(id))'
     )
-    op.drop_entity(public_organisation_organisation_select)
-
-    public_user_user_select = PGPolicy(
-        schema="public",
-        signature="user_select",
-        on_entity="public.user",
-        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_user())'
-    )
-    op.drop_entity(public_user_user_select)
+    op.drop_entity(public_organization_organization_select)
 
     public_user_group_association_user_group_association_select = PGPolicy(
         schema="public",
@@ -157,30 +211,52 @@ def downgrade() -> None:
         schema="public",
         signature="group_select",
         on_entity="public.group",
-        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organisation_id))'
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (public.is_org_member(organization_id))'
     )
     op.drop_entity(public_group_group_select)
+
+    public_is_server_port_member = PGFunction(
+        schema="public",
+        signature="is_server_port_member(p_server_port_id integer)",
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server_port sp\n    join public.server_host si on si.id = sp.server_host_id\n    join public.server s on s.id = si.server_id\n    join public.organization o on o.id = s.organization_id\n    where sp.id = p_server_port_id\n      and public.is_org_member(o.id)\n  );\n$$'
+    )
+    op.drop_entity(public_is_server_port_member)
 
     public_is_server_member = PGFunction(
         schema="public",
         signature="is_server_member(p_server_id integer)",
-        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server s\n    join public.organisation o on o.id = s.organisation_id\n    where s.id = p_server_id\n      and public.is_org_member(o.id)\n  );\n$$'
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server s\n    join public.organization o on o.id = s.organization_id\n    where s.id = p_server_id\n      and public.is_org_member(o.id)\n  );\n$$'
     )
     op.drop_entity(public_is_server_member)
+
+    public_is_server_host_member = PGFunction(
+        schema="public",
+        signature="is_server_host_member(p_server_host_id integer)",
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.server_host si\n    join public.server s on s.id = si.server_id\n    join public.organization o on o.id = s.organization_id\n    where si.id = p_server_host_id\n      and public.is_org_member(o.id)\n  );\n$$'
+    )
+    op.drop_entity(public_is_server_host_member)
 
     public_is_org_member = PGFunction(
         schema="public",
         signature="is_org_member(p_org_id integer)",
-        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.user_group_association uga\n    join public."group" g on g.id = uga.group_id\n    where uga.user_id = public.current_user_id()\n      and g.organisation_id = p_org_id\n  );\n$$'
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public.user_group_association uga\n    join public."group" g on g.id = uga.group_id\n    where uga.user_id = public.current_user_id()\n      and g.organization_id = p_org_id\n  );\n$$'
     )
     op.drop_entity(public_is_org_member)
 
     public_is_group_org_member = PGFunction(
         schema="public",
         signature="is_group_org_member(p_group_id integer)",
-        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public."group" g_target\n    join public."group" g_member\n      on g_member.organisation_id = g_target.organisation_id\n    join public.user_group_association uga\n      on uga.group_id = g_member.id\n    where uga.user_id = public.current_user_id()\n      and g_target.id = p_group_id\n  );\n$$'
+        definition='returns boolean\nlanguage sql\nstable\nsecurity definer\nset search_path = public\nas $$\n  select exists (\n    select 1\n    from public."group" g_target\n    join public."group" g_member\n      on g_member.organization_id = g_target.organization_id\n    join public.user_group_association uga\n      on uga.group_id = g_member.id\n    where uga.user_id = public.current_user_id()\n      and g_target.id = p_group_id\n  );\n$$'
     )
     op.drop_entity(public_is_group_org_member)
+
+    public_user_user_select = PGPolicy(
+        schema="public",
+        signature="user_select",
+        on_entity="public.user",
+        definition='AS PERMISSIVE\n        FOR SELECT\n        TO authenticated\n        USING (auth.uid() = auth_user_id)'
+    )
+    op.drop_entity(public_user_user_select)
 
     public_is_user = PGFunction(
         schema="public",

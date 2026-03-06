@@ -16,7 +16,7 @@ def entrypoint_get_json_info_from_command(
         raise Exception("Remote node entrypoint/user is not defined")
     ip = entrypoint["server"]["ip"]
     if ip is None:
-        raise Exception("Remote node entrypoint/server/ip is not defined")
+        raise Exception("Remote node entrypoint/server/port is not defined")
     status = execute_remote_command_to_json(
         command, remote_node_path, user, ip
     )

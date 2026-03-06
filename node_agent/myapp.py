@@ -13,7 +13,7 @@ from node_agent.api.test.api_test import test_api
 from node_agent.api.server.api_server import server_api
 from node_agent.api.oasis.api_oasis import oasis_api
 from node_agent.api.oasis.api_oasis_config import oasis_config
-from node_agent.api.organisation.api_organisation import organisation_api
+from node_agent.api.organization.api_organization import organization_api
 
 
 def _init_db():
@@ -45,7 +45,7 @@ def init_app(init_db=True):
     app.include_router(server_api)
     app.include_router(oasis_api)
     app.include_router(oasis_config)
-    app.include_router(organisation_api)
+    app.include_router(organization_api)
 
     @app.get("/api/swagger.json")
     def specs():

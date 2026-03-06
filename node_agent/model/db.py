@@ -130,6 +130,14 @@ def column_foreign_key(key, primary_key=False, ondelete=None):
     )
 
 
+def column_foreign_key_required_cascade(key):
+    return mapped_column(
+        db.Integer,
+        db.ForeignKey(key, ondelete="CASCADE"),
+        nullable=False,
+    )
+
+
 def column_relationship_many_to_many(
     mapped, secondary, back_populates=None, lazy="select"
 ):
@@ -165,7 +173,7 @@ def column_relationship_list_req(
 
 
 def column_relationship(foreign_keys=None):
-    return relationship(default=None, foreign_keys=foreign_keys)
+    return relationship(foreign_keys=foreign_keys, init=False)
 
 
 class Base(MappedAsDataclass, DeclarativeBase):

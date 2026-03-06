@@ -2,12 +2,14 @@ import logging
 from tests.utils.test_node import load_test_node
 from node_agent.service.server.server_info import server_get_public_address
 from node_agent.service.server.server_install import server_install_package
+from tests.utils.user_util import user_util_get_test_organization
 
 logger = logging.getLogger()
 
 
 def test_server_info_status(fastapi_app):
-    node = load_test_node()
+    _, _, organization = user_util_get_test_organization()
+    node = load_test_node(organization["id"])
     assert "id" in node
     server_install_package("curl", node["entrypoint_admin"])
     # status = oasis_node_info_status(node)

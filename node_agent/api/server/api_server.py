@@ -13,8 +13,14 @@ from node_agent.utils.db_util import (
     delete_object,
     get_object_list,
 )
+from node_agent.api.server.server_host import server_host_api
+from node_agent.api.server.server_port import server_port_api
+from node_agent.api.server.server_ssh import server_ssh_api
 
 server_api = APIRouter()
+server_api.include_router(server_host_api)
+server_api.include_router(server_port_api)
+server_api.include_router(server_ssh_api)
 
 
 @server_api.put("/api/server", dependencies=[Depends(require_appkey)])

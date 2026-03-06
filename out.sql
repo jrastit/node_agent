@@ -1,5 +1,5 @@
 Loading settings from /home/oasis/node_agent/settings/settings.yaml and /home/oasis/node_agent/settings/.secrets.yaml
-METADATA TABLES: ['entrypoint', 'group', 'oasis_config', 'oasis_entity', 'oasis_network', 'oasis_node', 'oasis_node_nodetype', 'oasis_nodetype', 'oasis_paratime_config', 'organisation', 'server', 'user', 'user_group_association']
+METADATA TABLES: ['entrypoint', 'group', 'oasis_config', 'oasis_entity', 'oasis_network', 'oasis_node', 'oasis_node_nodetype', 'oasis_nodetype', 'oasis_paratime_config', 'organization', 'server', 'user', 'user_group_association']
 BEGIN;
 
 CREATE TABLE alembic_version (
@@ -43,14 +43,14 @@ CREATE TABLE oasis_network (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE organisation (
+CREATE TABLE organization (
     id SERIAL NOT NULL, 
     time_create TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
     time_updated TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
     name VARCHAR NOT NULL, 
     parent_id INTEGER, 
     PRIMARY KEY (id), 
-    FOREIGN KEY(parent_id) REFERENCES organisation (id)
+    FOREIGN KEY(parent_id) REFERENCES organization (id)
 );
 
 CREATE TABLE "user" (
@@ -67,9 +67,9 @@ CREATE TABLE "group" (
     time_create TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
     time_updated TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
     name VARCHAR NOT NULL, 
-    organisation_id INTEGER, 
+    organization_id INTEGER, 
     PRIMARY KEY (id), 
-    FOREIGN KEY(organisation_id) REFERENCES organisation (id)
+    FOREIGN KEY(organization_id) REFERENCES organization (id)
 );
 
 CREATE TABLE oasis_nodetype (
@@ -115,9 +115,9 @@ CREATE TABLE server (
     cloud VARCHAR, 
     cloud_name VARCHAR, 
     ip VARCHAR, 
-    organisation_id INTEGER, 
+    organization_id INTEGER, 
     PRIMARY KEY (id), 
-    FOREIGN KEY(organisation_id) REFERENCES organisation (id)
+    FOREIGN KEY(organization_id) REFERENCES organization (id)
 );
 
 CREATE TABLE entrypoint (
@@ -198,7 +198,7 @@ as $$
     from public.user_group_association uga
     join public."group" g on g.id = uga.group_id
     where uga.user_id = public.current_user_id()
-      and g.organisation_id = p_org_id
+      and g.organization_id = p_org_id
   );
 $$;
 
@@ -522,37 +522,37 @@ REVOKE SELECT ON "public"."oasis_paratime_config" FROM "service_role";
 
 REVOKE UPDATE ON "public"."oasis_paratime_config" FROM "service_role";
 
-REVOKE INSERT ON "public"."organisation" FROM "anon";
+REVOKE INSERT ON "public"."organization" FROM "anon";
 
-REVOKE REFERENCES ON "public"."organisation" FROM "anon";
+REVOKE REFERENCES ON "public"."organization" FROM "anon";
 
-REVOKE SELECT ON "public"."organisation" FROM "anon";
+REVOKE SELECT ON "public"."organization" FROM "anon";
 
-REVOKE UPDATE ON "public"."organisation" FROM "anon";
+REVOKE UPDATE ON "public"."organization" FROM "anon";
 
-REVOKE INSERT ON "public"."organisation" FROM "authenticated";
+REVOKE INSERT ON "public"."organization" FROM "authenticated";
 
-REVOKE REFERENCES ON "public"."organisation" FROM "authenticated";
+REVOKE REFERENCES ON "public"."organization" FROM "authenticated";
 
-REVOKE SELECT ON "public"."organisation" FROM "authenticated";
+REVOKE SELECT ON "public"."organization" FROM "authenticated";
 
-REVOKE UPDATE ON "public"."organisation" FROM "authenticated";
+REVOKE UPDATE ON "public"."organization" FROM "authenticated";
 
-REVOKE INSERT ON "public"."organisation" FROM "postgres";
+REVOKE INSERT ON "public"."organization" FROM "postgres";
 
-REVOKE REFERENCES ON "public"."organisation" FROM "postgres";
+REVOKE REFERENCES ON "public"."organization" FROM "postgres";
 
-REVOKE SELECT ON "public"."organisation" FROM "postgres";
+REVOKE SELECT ON "public"."organization" FROM "postgres";
 
-REVOKE UPDATE ON "public"."organisation" FROM "postgres";
+REVOKE UPDATE ON "public"."organization" FROM "postgres";
 
-REVOKE INSERT ON "public"."organisation" FROM "service_role";
+REVOKE INSERT ON "public"."organization" FROM "service_role";
 
-REVOKE REFERENCES ON "public"."organisation" FROM "service_role";
+REVOKE REFERENCES ON "public"."organization" FROM "service_role";
 
-REVOKE SELECT ON "public"."organisation" FROM "service_role";
+REVOKE SELECT ON "public"."organization" FROM "service_role";
 
-REVOKE UPDATE ON "public"."organisation" FROM "service_role";
+REVOKE UPDATE ON "public"."organization" FROM "service_role";
 
 REVOKE INSERT ON "public"."server" FROM "anon";
 
@@ -674,29 +674,29 @@ REVOKE TRUNCATE ON "public"."alembic_version" FROM "service_role";
 
 REVOKE TRIGGER ON "public"."alembic_version" FROM "service_role";
 
-REVOKE DELETE ON "public"."organisation" FROM "postgres";
+REVOKE DELETE ON "public"."organization" FROM "postgres";
 
-REVOKE TRUNCATE ON "public"."organisation" FROM "postgres";
+REVOKE TRUNCATE ON "public"."organization" FROM "postgres";
 
-REVOKE TRIGGER ON "public"."organisation" FROM "postgres";
+REVOKE TRIGGER ON "public"."organization" FROM "postgres";
 
-REVOKE DELETE ON "public"."organisation" FROM "anon";
+REVOKE DELETE ON "public"."organization" FROM "anon";
 
-REVOKE TRUNCATE ON "public"."organisation" FROM "anon";
+REVOKE TRUNCATE ON "public"."organization" FROM "anon";
 
-REVOKE TRIGGER ON "public"."organisation" FROM "anon";
+REVOKE TRIGGER ON "public"."organization" FROM "anon";
 
-REVOKE DELETE ON "public"."organisation" FROM "authenticated";
+REVOKE DELETE ON "public"."organization" FROM "authenticated";
 
-REVOKE TRUNCATE ON "public"."organisation" FROM "authenticated";
+REVOKE TRUNCATE ON "public"."organization" FROM "authenticated";
 
-REVOKE TRIGGER ON "public"."organisation" FROM "authenticated";
+REVOKE TRIGGER ON "public"."organization" FROM "authenticated";
 
-REVOKE DELETE ON "public"."organisation" FROM "service_role";
+REVOKE DELETE ON "public"."organization" FROM "service_role";
 
-REVOKE TRUNCATE ON "public"."organisation" FROM "service_role";
+REVOKE TRUNCATE ON "public"."organization" FROM "service_role";
 
-REVOKE TRIGGER ON "public"."organisation" FROM "service_role";
+REVOKE TRIGGER ON "public"."organization" FROM "service_role";
 
 REVOKE DELETE ON "public"."group" FROM "postgres";
 

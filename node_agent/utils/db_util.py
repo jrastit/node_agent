@@ -41,14 +41,24 @@ def _serialize_model(obj, visited=None):
 
 
 def inset_or_update_object_from_json_raw(mapper, data):
-    if "id" not in data or not data["id"]:
-        # user = User(**{k: v for k, v in obj.items() if k in {'id', 'name'}})
+    is_insert = "id" not in data or not data["id"]
+    if is_insert:
         db.session.bulk_insert_mappings(mapper, [data])
     else:
         db.session.bulk_update_mappings(mapper, [data])
+
     db.session.commit()
-    ret = db.session.query(mapper).filter_by(name=data["name"]).first()
-    return ret
+
+    if not is_insert:
+        return db.session.query(mapper).filter_by(id=data["id"]).first()
+
+    if "name" in data and hasattr(mapper, "name"):
+        obj = db.session.query(mapper).filter_by(name=data["name"]).first()
+        if obj is not None:
+            return obj
+
+    # Fallback for models without a name field.
+    return db.session.query(mapper).order_by(mapper.id.desc()).first()
 
 
 def inset_or_update_object_from_json(mapper, data):

@@ -15,24 +15,24 @@ from node_agent.model.db import (
 
 
 @dataclass
-class Organisation(Base):
-    __tablename__ = "organisation"
+class Organization(Base):
+    __tablename__ = "organization"
     id: Mapped[intpk] = column_id()
     time_create: Mapped[datetime] = column_time_created()
     time_updated: Mapped[datetime] = column_time_updated()
     name: Mapped[str] = column_name()
     parent_id: Mapped[int] = column_foreign_key(
-        "organisation.id", primary_key=False
+        "organization.id", primary_key=False
     )
-    parent: Mapped["Organisation"] = column_relationship(
-        foreign_keys="Organisation.parent_id"
+    parent: Mapped["Organization"] = column_relationship(
+        foreign_keys="Organization.parent_id"
     )
 
 
-organisation_select_policy = PGPolicy(
+organization_select_policy = PGPolicy(
     schema="public",
-    signature="organisation_select",
-    on_entity="public.organisation",
+    signature="organization_select",
+    on_entity="public.organization",
     definition="""
         AS PERMISSIVE
         FOR SELECT
