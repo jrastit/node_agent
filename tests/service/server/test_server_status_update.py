@@ -53,4 +53,4 @@ def test_server_status_update():
     assert server_2["fqdn"] is not None
     server_status_update_dynamic(organization_id)
     status_1 = server_status_data_get_lastest(server_id_1)
-    logger.info(status_1)
+    logger.info("latest status 1: %s", status_1)
