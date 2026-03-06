@@ -11,4 +11,4 @@ python3.11 ./reset_database.py
 ./script/alembic/alembic_run.sh
 
 # pytest --cov --cov-branch --cov-report term-missing -s  -W ignore::DeprecationWarning tests
-pytest -k ansible -s  -W ignore::DeprecationWarning tests
+pytest -k test_server_status_update -s  -W ignore::DeprecationWarning tests

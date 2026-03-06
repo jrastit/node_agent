@@ -9,6 +9,12 @@ class ServerUpsertSchema(BaseModel):
     cloud: str | None = None
     cloud_name: str | None = None
     ip: str | None = None
+    hostname: str | None = None
+    fqdn: str | None = None
+    os: str | None = None
+    kernel: str | None = None
+    cpu_cores: int | None = None
+    ram_total_mb: int | None = None
     organization_id: int | None = None
 
     @model_validator(mode="after")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from node_agent.ansible.server.status_dynamic import retrieve_server_dynamic
 from node_agent.ansible.server.status_static import retrieve_server_static
@@ -56,7 +56,7 @@ def _merge_host_records(
 def retrieve_server_state(
     hosts: Optional[List[str]] = None,
     inventory: str = "",
-    service_to_check: str = "sshd",
+    service_to_check: Union[str, List[str]] = "sshd",
     include_raw: bool = False,
 ) -> Dict[str, Any]:
     static_result = retrieve_server_static(

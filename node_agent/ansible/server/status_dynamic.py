@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from node_agent.ansible.ansible_playbook import AnsiblePlaybook
 
@@ -124,12 +124,76 @@ def _flatten_host_errors(
     ]
 
 
+def _normalize_service_names(
+    service_to_check: Union[str, List[str], None],
+) -> List[str]:
+    if service_to_check is None:
+        return ["sshd"]
+
+    if isinstance(service_to_check, str):
+        return [service_to_check]
+
+    normalized: List[str] = []
+    for name in service_to_check:
+        if isinstance(name, str) and name.strip():
+            normalized.append(name)
+    return normalized or ["sshd"]
+
+
+def _parse_services(
+    active_results: Any,
+    enabled_results: Any,
+) -> List[Dict[str, Any]]:
+    active_map: Dict[str, Dict[str, Any]] = {}
+    enabled_map: Dict[str, Dict[str, Any]] = {}
+
+    if isinstance(active_results, list):
+        for item in active_results:
+            if not isinstance(item, dict):
+                continue
+            service = item.get("item")
+            if isinstance(service, str):
+                active_map[service] = item
+
+    if isinstance(enabled_results, list):
+        for item in enabled_results:
+            if not isinstance(item, dict):
+                continue
+            service = item.get("item")
+            if isinstance(service, str):
+                enabled_map[service] = item
+
+    services: List[Dict[str, Any]] = []
+    for service in sorted(set(active_map.keys()) | set(enabled_map.keys())):
+        active_item = active_map.get(service, {})
+        enabled_item = enabled_map.get(service, {})
+
+        state = str(active_item.get("stdout", "unknown")).strip() or "unknown"
+        status = (
+            str(enabled_item.get("stdout", "unknown")).strip() or "unknown"
+        )
+
+        services.append(
+            {
+                "name": service,
+                "state": state,
+                "status": status,
+                "active_rc": active_item.get("rc"),
+                "enabled_rc": enabled_item.get("rc"),
+            }
+        )
+
+    return services
+
+
 def retrieve_server_dynamic(
     hosts: Optional[List[str]] = None,
     inventory: str = "",
-    service_to_check: str = "sshd",
+    service_to_check: Union[str, List[str]] = "sshd",
     include_raw: bool = False,
 ) -> Dict[str, Any]:
+    service_names = _normalize_service_names(service_to_check)
+
     tasks = [
         dict(
             name="Get uptime",
@@ -156,7 +220,26 @@ def retrieve_server_dynamic(
             changed_when=False,
         ),
         dict(
-            name="Collect service facts", action=dict(module="service_facts")
+            name="Get service active states",
+            action=dict(
+                module="command",
+                args=dict(cmd="systemctl is-active {{ item }}"),
+            ),
+            loop="{{ service_to_check }}",
+            register="service_active_results",
+            changed_when=False,
+            failed_when=False,
+        ),
+        dict(
+            name="Get service enabled states",
+            action=dict(
+                module="command",
+                args=dict(cmd="systemctl is-enabled {{ item }}"),
+            ),
+            loop="{{ service_to_check }}",
+            register="service_enabled_results",
+            changed_when=False,
+            failed_when=False,
         ),
         dict(
             name="Collect dynamic server information",
@@ -168,14 +251,8 @@ def retrieve_server_dynamic(
                         load_avg="{{ load_result.stdout }}",
                         disk_usage="{{ disk_result.stdout_lines }}",
                         memory_usage="{{ memory_result.stdout_lines }}",
-                        service_state=(
-                            "{{ ansible_facts.services[service_to_check + '.service'].state "
-                            "| default('unknown') }}"
-                        ),
-                        service_status=(
-                            "{{ ansible_facts.services[service_to_check + '.service'].status "
-                            "| default('unknown') }}"
-                        ),
+                        service_active_results="{{ service_active_results.results }}",
+                        service_enabled_results="{{ service_enabled_results.results }}",
                     )
                 ),
             ),
@@ -186,7 +263,7 @@ def retrieve_server_dynamic(
         name="Retrieve dynamic server state",
         hosts=hosts or [],
         inventory=inventory,
-        play_vars={"service_to_check": service_to_check},
+        play_vars={"service_to_check": service_names},
         gather_facts="no",
         become=False,
         tasks=tasks,
@@ -198,16 +275,35 @@ def retrieve_server_dynamic(
     for host, host_result in output["ok"].items():
         msg = host_result.get("msg")
         if isinstance(msg, dict):
-            service_state = msg.get("service_state")
-            service_status = msg.get("service_status")
-            status_value = (
-                str(service_status).lower()
-                if service_status is not None
-                else ""
-            )
             disks = _parse_disk_usage(msg.get("disk_usage", []))
             memory_metrics = _flatten_memory_metrics(
                 _parse_memory_usage(msg.get("memory_usage", []))
+            )
+            services = _parse_services(
+                msg.get("service_active_results"),
+                msg.get("service_enabled_results"),
+            )
+
+            all_service_active = (
+                all(service.get("state") == "active" for service in services)
+                if services
+                else False
+            )
+            all_service_status_ok = (
+                all(
+                    str(service.get("status", "")).lower()
+                    in (
+                        "enabled",
+                        "running",
+                        "active",
+                        "alias",
+                        "static",
+                        "indirect",
+                    )
+                    for service in services
+                )
+                if services
+                else False
             )
 
             record = {
@@ -218,14 +314,10 @@ def retrieve_server_dynamic(
                     **_flatten_load_avg(str(msg.get("load_avg", ""))),
                     "disks": disks,
                     **memory_metrics,
-                    "service_state": service_state,
-                    "service_status": service_status,
-                    "health": {
-                        "reachable": True,
-                        "service_active": service_state == "active",
-                        "service_status_ok": status_value
-                        in ("running", "enabled", "active", "alias"),
-                    },
+                    "services": services,
+                    "health_reachable": True,
+                    "health_service_active": all_service_active,
+                    "health_service_status_ok": all_service_status_ok,
                     "collected_at": datetime.now(timezone.utc).isoformat(),
                 },
             }
@@ -237,7 +329,7 @@ def retrieve_server_dynamic(
                 "target": host,
                 "static_fields": {},
                 "dynamic_fields": {
-                    "health": {"reachable": True},
+                    "health_reachable": True,
                     "collected_at": datetime.now(timezone.utc).isoformat(),
                 },
             }

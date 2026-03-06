@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from node_agent.ansible.ansible_playbook import AnsiblePlaybook
 
@@ -23,7 +23,7 @@ def _flatten_host_errors(
 def retrieve_server_static(
     hosts: Optional[List[str]] = None,
     inventory: str = "",
-    service_to_check: str = "sshd",
+    service_to_check: Union[str, List[str]] = "sshd",
     include_raw: bool = False,
 ) -> Dict[str, Any]:
     tasks = [
