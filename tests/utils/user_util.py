@@ -8,28 +8,25 @@ from node_agent.config import settings
 from node_agent.data.organisation_data import organisation_data_create
 from node_agent.service.supabase.supabase_auth import (
     supabase_auth_with_password,
-    supabase_auth_with_token,
     supabase_get_user_list_from_email,
     supabase_register_user,
     supabase_get_user_from_email,
     supabase_delete_user,
 )
 from node_agent.service.supabase.supabase_client import (
-    supabase_client,
     supabase_client_from_session,
 )
 
 logger = logging.getLogger(__name__)
 
-test_user_session = None
 test_user = None
 
 
 def user_util_get_test_user(random=False):
-    global test_user_session, test_user
+    global test_user
     user_session = None
     user = None
-    if test_user is None or test_user_session is None or random:
+    if test_user is None or random:
         if random:
             user_email = f"test_user_{uuid.uuid4()}@example.com"
             user_password = f"{uuid.uuid4()}"
@@ -55,12 +52,11 @@ def user_util_get_test_user(random=False):
                 user is not None
             ), "Test user authentication failed after registration"
 
-    if random:
-        return user_session, user
-    test_user_session = user_session
-    test_user = user
+        if random:
+            return user_session, user
+        test_user = (user_session, user)
 
-    return test_user_session, test_user
+    return test_user
 
 
 def user_util_get_test_organisation(random=False):

@@ -44,3 +44,10 @@ def test_supabase_test_user():
     assert "name" in organisation
     assert organisation["name"] == "test_organisation"
     assert organisation["id"] is not None
+
+
+def test_supabase_test_user2():
+
+    session, user = user_util_get_test_user()
+    assert session is not None
+    assert user is not None

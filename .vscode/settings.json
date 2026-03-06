@@ -12,6 +12,8 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
+    "python.testing.pytestPath": "${workspaceFolder}/.vscode/pytest_with_setup.sh",
+    "python.envFile": "${workspaceFolder}/.vscode/.env",
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
 }
