@@ -5,7 +5,11 @@ from node_agent.data.server_data import (
     server_ssh_data_create_full,
 )
 from node_agent.config import settings
-from node_agent.service.server.server_status import server_status_update
+from node_agent.data.server_status_data import server_status_data_get_lastest
+from node_agent.service.server.server_status import (
+    server_status_update_dynamic,
+    server_status_update_static,
+)
 from tests.utils.user_util import user_util_get_test_organization
 
 logger = logging.getLogger(__name__)
@@ -34,7 +38,7 @@ def test_server_status_update():
         ssh_user_name=user,
     )
     server_id_2 = ret_2["server"]["id"]
-    server_status_update(organization_id)
+    server_status_update_static(organization_id)
     server_1 = server_data_get_server(server_id_1)
     logger.info(server_1)
     assert server_1 is not None
@@ -47,3 +51,6 @@ def test_server_status_update():
     assert server_2["ip"] is not None
     assert server_2["hostname"] is not None
     assert server_2["fqdn"] is not None
+    server_status_update_dynamic(organization_id)
+    status_1 = server_status_data_get_lastest(server_id_1)
+    logger.info(status_1)

@@ -14,6 +14,9 @@ from node_agent.model.db import (
     column_time_created,
     column_time_updated,
 )
+from node_agent.model.server import (
+    Server,
+)  # Needed for runtime type-hint resolution
 
 
 @dataclass
