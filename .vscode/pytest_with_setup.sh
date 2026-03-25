@@ -12,7 +12,7 @@ export ENV_FOR_DYNACONF=test
 if [[ -x "${REPO_ROOT}/venv/bin/python" ]]; then
 	PYTHON_BIN="${REPO_ROOT}/venv/bin/python"
 else
-	PYTHON_BIN="python3.11"
+	PYTHON_BIN="python3.12"
 fi
 
 if [[ -d "${REPO_ROOT}/venv/bin" ]]; then

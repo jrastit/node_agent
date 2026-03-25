@@ -5,4 +5,4 @@ source venv/bin/activate
 
 export ENV_FOR_DYNACONF=server
 
-python3.11 ./reset_database.py
+python3.12 ./reset_database.py

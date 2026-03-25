@@ -1,8 +1,8 @@
 set -e
 source venv/bin/activate
 
-pip install --upgrade "pip<25.3"
-pip show pip-tools >/dev/null 2>&1 || pip install pip-tools
+# Keep pip below 26 because current pip-tools is not compatible with pip 26 APIs.
+pip install --upgrade "pip<26" "pip-tools"
 
 pip-compile --output-file=requirements.txt pyproject.toml --resolver=backtracking
 pip-compile --output-file=requirements_test.txt pyproject.toml --extra=test --resolver=backtracking
