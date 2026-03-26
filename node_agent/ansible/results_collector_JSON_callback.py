@@ -22,6 +22,7 @@ class ResultsCollectorJSONCallback(CallbackBase):
     def __init__(self, *args, **kwargs):
         super(ResultsCollectorJSONCallback, self).__init__(*args, **kwargs)
         self.host_ok = {}
+        self.host_ok_history = {}
         self.host_unreachable = {}
         self.host_failed = {}
 
@@ -35,7 +36,19 @@ class ResultsCollectorJSONCallback(CallbackBase):
         Also, store the result in an instance attribute for retrieval later
         """
         host = result._host
-        self.host_ok[host.get_name()] = result
+        host_name = host.get_name()
+        self.host_ok[host_name] = result
+
+        task_name = ""
+        if getattr(result, "_task", None) is not None:
+            task_name = result._task.get_name() or ""
+
+        self.host_ok_history.setdefault(host_name, []).append(
+            {
+                "task": task_name,
+                "result": result._result,
+            }
+        )
         # logger.info(json.dumps({host.name: result._result}, indent=4))
 
     def v2_runner_on_failed(self, result, *args, **kwargs):

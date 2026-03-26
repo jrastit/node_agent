@@ -20,32 +20,32 @@ def _flatten_host_errors(
     ]
 
 
+def _to_int(value: Any) -> Optional[int]:
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _get_task_result(
+    entries: List[Dict[str, Any]],
+    task_name: str,
+) -> Dict[str, Any]:
+    for entry in reversed(entries):
+        if entry.get("task") == task_name and isinstance(
+            entry.get("result"), dict
+        ):
+            return entry["result"]
+    return {}
+
+
 def retrieve_server_static(
     hosts: Optional[List[str]] = None,
     inventory: str = "",
     service_to_check: Union[str, List[str]] = "sshd",
     include_raw: bool = False,
 ) -> Dict[str, Any]:
-    tasks = [
-        dict(
-            name="Collect static server information",
-            action=dict(
-                module="debug",
-                args=dict(
-                    msg=dict(
-                        hostname="{{ ansible_hostname }}",
-                        fqdn="{{ ansible_fqdn }}",
-                        ip="{{ ansible_default_ipv4.address | default('N/A') }}",
-                        os="{{ ansible_distribution }} {{ ansible_distribution_version }}",
-                        kernel="{{ ansible_kernel }}",
-                        cpu_cores="{{ ansible_processor_vcpus | default('N/A') }}",
-                        ram_total_mb="{{ ansible_memtotal_mb }}",
-                        service_name="{{ service_to_check }}",
-                    )
-                ),
-            ),
-        ),
-    ]
+    tasks: List[Dict[str, Any]] = []
 
     playbook = AnsiblePlaybook(
         name="Retrieve static server state",
@@ -58,32 +58,47 @@ def retrieve_server_static(
     )
 
     output = playbook.play()
+    ok_history = output.get("ok_history", {})
 
     hosts_data: List[Dict[str, Any]] = []
-    for host, host_result in output["ok"].items():
-        msg = host_result.get("msg")
-        if isinstance(msg, dict):
-            record = {
-                "target": host,
-                "static_fields": msg,
-                "dynamic_fields": {
-                    "collected_at": datetime.now(timezone.utc).isoformat(),
-                },
-            }
-            if include_raw:
-                record["raw"] = msg
-            hosts_data.append(record)
-        else:
-            fallback = {
-                "target": host,
-                "static_fields": {},
-                "dynamic_fields": {
-                    "collected_at": datetime.now(timezone.utc).isoformat(),
-                },
-            }
-            if include_raw:
-                fallback["raw"] = host_result
-            hosts_data.append(fallback)
+    for host, entries in ok_history.items():
+        if not isinstance(entries, list):
+            entries = []
+
+        fact_result = _get_task_result(entries, "Gathering Facts")
+        facts = fact_result.get("ansible_facts", {})
+        if not isinstance(facts, dict):
+            facts = {}
+
+        default_ipv4 = facts.get("ansible_default_ipv4", {})
+        ip_address = "N/A"
+        if isinstance(default_ipv4, dict):
+            ip_address = str(default_ipv4.get("address", "N/A"))
+
+        static_fields = {
+            "hostname": facts.get("ansible_hostname"),
+            "fqdn": facts.get("ansible_fqdn"),
+            "ip": ip_address,
+            "os": "{} {}".format(
+                facts.get("ansible_distribution", ""),
+                facts.get("ansible_distribution_version", ""),
+            ).strip(),
+            "kernel": facts.get("ansible_kernel"),
+            "cpu_cores": _to_int(facts.get("ansible_processor_vcpus")),
+            "ram_total_mb": _to_int(facts.get("ansible_memtotal_mb")),
+            "service_name": service_to_check,
+        }
+
+        record = {
+            "target": host,
+            "static_fields": static_fields,
+            "dynamic_fields": {
+                "collected_at": datetime.now(timezone.utc).isoformat(),
+            },
+        }
+        if include_raw:
+            record["raw"] = facts
+        hosts_data.append(record)
 
     failed = _flatten_host_errors(output["failed"])
     unreachable = _flatten_host_errors(output["unreachable"])

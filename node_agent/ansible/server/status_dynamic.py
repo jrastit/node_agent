@@ -144,6 +144,18 @@ def _parse_services(
     active_results: Any,
     enabled_results: Any,
 ) -> List[Dict[str, Any]]:
+    def _normalize_output(value: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return "unknown"
+
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if not lines:
+            return "unknown"
+
+        # Some environments may return duplicated lines; keep first meaningful one.
+        return lines[0]
+
     active_map: Dict[str, Dict[str, Any]] = {}
     enabled_map: Dict[str, Dict[str, Any]] = {}
 
@@ -168,10 +180,8 @@ def _parse_services(
         active_item = active_map.get(service, {})
         enabled_item = enabled_map.get(service, {})
 
-        state = str(active_item.get("stdout", "unknown")).strip() or "unknown"
-        status = (
-            str(enabled_item.get("stdout", "unknown")).strip() or "unknown"
-        )
+        state = _normalize_output(active_item.get("stdout", "unknown"))
+        status = _normalize_output(enabled_item.get("stdout", "unknown"))
 
         services.append(
             {
@@ -186,6 +196,18 @@ def _parse_services(
     return services
 
 
+def _get_task_result(
+    entries: List[Dict[str, Any]],
+    task_name: str,
+) -> Dict[str, Any]:
+    for entry in reversed(entries):
+        if entry.get("task") == task_name and isinstance(
+            entry.get("result"), dict
+        ):
+            return entry["result"]
+    return {}
+
+
 def retrieve_server_dynamic(
     hosts: Optional[List[str]] = None,
     inventory: str = "",
@@ -195,68 +217,52 @@ def retrieve_server_dynamic(
     service_names = _normalize_service_names(service_to_check)
 
     tasks = [
-        dict(
-            name="Get uptime",
-            action=dict(module="command", args=dict(cmd="uptime -p")),
-            register="uptime_result",
-            changed_when=False,
-        ),
-        dict(
-            name="Get load average",
-            action=dict(module="command", args=dict(cmd="cat /proc/loadavg")),
-            register="load_result",
-            changed_when=False,
-        ),
-        dict(
-            name="Get disk usage",
-            action=dict(module="command", args=dict(cmd="df -hP")),
-            register="disk_result",
-            changed_when=False,
-        ),
-        dict(
-            name="Get memory usage",
-            action=dict(module="command", args=dict(cmd="free -m")),
-            register="memory_result",
-            changed_when=False,
-        ),
-        dict(
-            name="Get service active states",
-            action=dict(
-                module="command",
-                args=dict(cmd="systemctl is-active {{ item }}"),
-            ),
-            loop="{{ service_to_check }}",
-            register="service_active_results",
-            changed_when=False,
-            failed_when=False,
-        ),
-        dict(
-            name="Get service enabled states",
-            action=dict(
-                module="command",
-                args=dict(cmd="systemctl is-enabled {{ item }}"),
-            ),
-            loop="{{ service_to_check }}",
-            register="service_enabled_results",
-            changed_when=False,
-            failed_when=False,
-        ),
-        dict(
-            name="Collect dynamic server information",
-            action=dict(
-                module="debug",
-                args=dict(
-                    msg=dict(
-                        uptime="{{ uptime_result.stdout }}",
-                        load_avg="{{ load_result.stdout }}",
-                        disk_usage="{{ disk_result.stdout_lines }}",
-                        memory_usage="{{ memory_result.stdout_lines }}",
-                        service_active_results="{{ service_active_results.results }}",
-                        service_enabled_results="{{ service_enabled_results.results }}",
-                    )
-                ),
-            ),
-        ),
+        {
+            "name": "Get uptime",
+            "action": "ansible.builtin.command",
+            "args": {"cmd": "uptime -p"},
+            "register": "uptime_result",
+            "changed_when": False,
+        },
+        {
+            "name": "Get load average",
+            "action": "ansible.builtin.command",
+            "args": {"cmd": "cat /proc/loadavg"},
+            "register": "load_result",
+            "changed_when": False,
+        },
+        {
+            "name": "Get disk usage",
+            "action": "ansible.builtin.command",
+            "args": {"cmd": "df -hP"},
+            "register": "disk_result",
+            "changed_when": False,
+        },
+        {
+            "name": "Get memory usage",
+            "action": "ansible.builtin.command",
+            "args": {"cmd": "free -m"},
+            "register": "memory_result",
+            "changed_when": False,
+        },
+        {
+            "name": "Get service active states",
+            "action": "ansible.builtin.command",
+            "args": {"cmd": "systemctl is-active {{ item }}"},
+            "loop": service_names,
+            "register": "service_active_results",
+            "changed_when": False,
+            "failed_when": False,
+        },
+        {
+            "name": "Get service enabled states",
+            "action": "ansible.builtin.command",
+            "args": {"cmd": "systemctl is-enabled {{ item }}"},
+            "loop": service_names,
+            "register": "service_enabled_results",
+            "changed_when": False,
+            "failed_when": False,
+        },
     ]
 
     playbook = AnsiblePlaybook(
@@ -270,72 +276,78 @@ def retrieve_server_dynamic(
     )
 
     output = playbook.play()
+    ok_history = output.get("ok_history", {})
 
     hosts_data: List[Dict[str, Any]] = []
-    for host, host_result in output["ok"].items():
-        msg = host_result.get("msg")
-        if isinstance(msg, dict):
-            disks = _parse_disk_usage(msg.get("disk_usage", []))
-            memory_metrics = _flatten_memory_metrics(
-                _parse_memory_usage(msg.get("memory_usage", []))
-            )
-            services = _parse_services(
-                msg.get("service_active_results"),
-                msg.get("service_enabled_results"),
-            )
+    for host, entries in ok_history.items():
+        if not isinstance(entries, list):
+            entries = []
 
-            all_service_active = (
-                all(service.get("state") == "active" for service in services)
-                if services
-                else False
-            )
-            all_service_status_ok = (
-                all(
-                    str(service.get("status", "")).lower()
-                    in (
-                        "enabled",
-                        "running",
-                        "active",
-                        "alias",
-                        "static",
-                        "indirect",
-                    )
-                    for service in services
+        uptime_result = _get_task_result(entries, "Get uptime")
+        load_result = _get_task_result(entries, "Get load average")
+        disk_result = _get_task_result(entries, "Get disk usage")
+        memory_result = _get_task_result(entries, "Get memory usage")
+        active_result = _get_task_result(entries, "Get service active states")
+        enabled_result = _get_task_result(
+            entries, "Get service enabled states"
+        )
+
+        disks = _parse_disk_usage(disk_result.get("stdout_lines", []))
+        memory_metrics = _flatten_memory_metrics(
+            _parse_memory_usage(memory_result.get("stdout_lines", []))
+        )
+        services = _parse_services(
+            active_result.get("results"),
+            enabled_result.get("results"),
+        )
+
+        all_service_active = (
+            all(service.get("state") == "active" for service in services)
+            if services
+            else False
+        )
+        all_service_status_ok = (
+            all(
+                str(service.get("status", "")).lower()
+                in (
+                    "enabled",
+                    "running",
+                    "active",
+                    "alias",
+                    "static",
+                    "indirect",
                 )
-                if services
-                else False
+                for service in services
             )
+            if services
+            else False
+        )
 
-            record = {
-                "target": host,
-                "static_fields": {},
-                "dynamic_fields": {
-                    "uptime": msg.get("uptime"),
-                    **_flatten_load_avg(str(msg.get("load_avg", ""))),
-                    "disks": disks,
-                    **memory_metrics,
-                    "services": services,
-                    "health_reachable": True,
-                    "health_service_active": all_service_active,
-                    "health_service_status_ok": all_service_status_ok,
-                    "collected_at": datetime.now(timezone.utc).isoformat(),
-                },
+        record = {
+            "target": host,
+            "static_fields": {},
+            "dynamic_fields": {
+                "uptime": uptime_result.get("stdout"),
+                **_flatten_load_avg(str(load_result.get("stdout", ""))),
+                "disks": disks,
+                **memory_metrics,
+                "services": services,
+                "health_reachable": True,
+                "health_service_active": all_service_active,
+                "health_service_status_ok": all_service_status_ok,
+                "collected_at": datetime.now(timezone.utc).isoformat(),
+            },
+        }
+        if include_raw:
+            record["raw"] = {
+                "uptime": uptime_result,
+                "load": load_result,
+                "disk": disk_result,
+                "memory": memory_result,
+                "service_active": active_result,
+                "service_enabled": enabled_result,
             }
-            if include_raw:
-                record["raw"] = msg
-            hosts_data.append(record)
-        else:
-            fallback = {
-                "target": host,
-                "static_fields": {},
-                "dynamic_fields": {
-                    "health_reachable": True,
-                    "collected_at": datetime.now(timezone.utc).isoformat(),
-                },
-            }
-            if include_raw:
-                fallback["raw"] = host_result
-            hosts_data.append(fallback)
+        hosts_data.append(record)
 
     failed = _flatten_host_errors(output["failed"])
     unreachable = _flatten_host_errors(output["unreachable"])

@@ -174,6 +174,7 @@ class AnsiblePlaybook:
                 host: data._result
                 for host, data in results_callback.host_ok.items()
             },
+            "ok_history": results_callback.host_ok_history,
             "failed": {
                 host: data._result
                 for host, data in results_callback.host_failed.items()

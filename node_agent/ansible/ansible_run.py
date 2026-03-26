@@ -10,15 +10,19 @@ def ansible_run():
     playbook = AnsiblePlaybook(
         hosts=["localhost"],
         tasks=[
-            dict(action=dict(module="shell", args="ls"), register="shell_out"),
-            dict(
-                action=dict(
-                    module="debug", args=dict(msg="{{shell_out.stdout}}")
-                )
-            ),
-            dict(
-                action=dict(module="command", args=dict(cmd="/usr/bin/uptime"))
-            ),
+            {
+                "action": "ansible.builtin.shell",
+                "args": {"cmd": "ls"},
+                "register": "shell_out",
+            },
+            {
+                "action": "ansible.builtin.debug",
+                "args": {"msg": "{{shell_out.stdout}}"},
+            },
+            {
+                "action": "ansible.builtin.command",
+                "args": {"cmd": "/usr/bin/uptime"},
+            },
         ],
     )
 
