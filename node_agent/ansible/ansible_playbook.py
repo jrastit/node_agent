@@ -9,7 +9,9 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.common.collections import ImmutableDict
 from ansible.parsing.dataloader import DataLoader
+from ansible.plugins.loader import init_plugin_loader
 from ansible.playbook.play import Play
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.vars.manager import VariableManager
 
 from node_agent.ansible.results_collector_JSON_callback import (
@@ -116,6 +118,9 @@ class AnsiblePlaybook:
         self._build_cli_args()
         sources = self._get_inventory_source()
 
+        if AnsibleCollectionConfig.collection_finder is None:
+            init_plugin_loader()
+
         loader = DataLoader()
         passwords = self.passwords or dict(vault_pass="secret")
         results_callback = ResultsCollectorJSONCallback()
@@ -128,8 +133,12 @@ class AnsiblePlaybook:
             variable_manager=variable_manager,
             loader=loader,
             passwords=passwords,
-            stdout_callback=results_callback,
+            stdout_callback_name="default",
         )
+        tqm.load_callbacks()
+        results_callback._init_callback_methods()
+        results_callback.set_options()
+        tqm._callback_plugins.append(results_callback)
 
         play_source = dict(
             name=self.name or "Ansible Play",

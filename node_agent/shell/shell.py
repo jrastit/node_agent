@@ -11,7 +11,9 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils.common.collections import ImmutableDict
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
+from ansible.plugins.loader import init_plugin_loader
 from ansible.playbook.play import Play
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.vars.manager import VariableManager
 from ansible import context
 
@@ -123,6 +125,9 @@ def execute_ansible_tasks(
         diff=False,
         verbosity=0,
     )
+    if AnsibleCollectionConfig.collection_finder is None:
+        init_plugin_loader()
+
     # required for
     # https://github.com/ansible/ansible/blob/devel/lib/ansible/inventory/manager.py#L204
     sources = ",".join(host_list)
@@ -152,8 +157,12 @@ def execute_ansible_tasks(
         variable_manager=variable_manager,
         loader=loader,
         passwords=passwords,
-        stdout_callback=results_callback,  # Use our custom callback instead of the ``default`` callback plugin, which prints to stdout
+        stdout_callback_name="default",
     )
+    tqm.load_callbacks()
+    results_callback._init_callback_methods()
+    results_callback.set_options()
+    tqm._callback_plugins.append(results_callback)
 
     # create data structure that represents our play, including tasks, this is basically what our YAML loader does internally.
     play_source = dict(
