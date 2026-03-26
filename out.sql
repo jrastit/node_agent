@@ -180,7 +180,7 @@ CREATE FUNCTION "public"."current_user_id"() returns integer
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select u.id
   from public.user u
@@ -191,7 +191,7 @@ CREATE FUNCTION "public"."is_org_member"(p_org_id integer) returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select exists (
     select 1

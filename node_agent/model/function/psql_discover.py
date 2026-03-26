@@ -9,7 +9,7 @@ returns table (
 )
 language sql
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select tablename::text
   from pg_catalog.pg_tables

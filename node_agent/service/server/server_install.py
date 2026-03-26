@@ -15,12 +15,10 @@ def server_install_package(package_name: str, entrypoint: dict) -> None:
     execute_ansible_tasks(
         [
             {
-                "action": {
-                    "module": "apt",
-                    "args": {
-                        "name": package_name,
-                        "state": "latest",
-                    },
+                "action": "ansible.builtin.apt",
+                "args": {
+                    "name": package_name,
+                    "state": "latest",
                 },
             }
         ],
